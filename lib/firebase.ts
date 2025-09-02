@@ -18,8 +18,10 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Auth: web by default; RN persistence on native
+// Web default
 let auth = getAuth(app);
+
+// Only on native, swap to RN persistence (avoid static import!)
 if (Platform.OS !== "web") {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -28,10 +30,11 @@ if (Platform.OS !== "web") {
       persistence: getReactNativePersistence(AsyncStorage),
     });
   } catch {
-    /* ignore hot reload collisions */
+    // ignore hot-reload collisions
   }
 }
 
-export { app, auth };
-export const db = getFirestore(app);     // ✅ use only getFirestore
-export const storage = getStorage(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+export { app, auth, db, storage };
