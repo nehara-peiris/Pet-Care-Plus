@@ -7,7 +7,7 @@ import {
   Pressable,
   Image,
   Alert,
-  ScrollView,.
+  ScrollView,
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
