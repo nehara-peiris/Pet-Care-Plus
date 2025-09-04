@@ -30,11 +30,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsub;
   }, []);
 
-  const signIn = (email: string, password: string) =>
-    signInWithEmailAndPassword(auth, email.trim(), password);
-  const signUp = (email: string, password: string) =>
-    createUserWithEmailAndPassword(auth, email.trim(), password);
-  const signOut = () => fbSignOut(auth);
+  // ✅ Return Promise<void> by awaiting the SDK call
+  const signIn = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email.trim(), password);
+  };
+
+  const signUp = async (email: string, password: string) => {
+    await createUserWithEmailAndPassword(auth, email.trim(), password);
+  };
+
+  const signOut = async () => {
+    await fbSignOut(auth);
+  };
 
   return (
     <AuthCtx.Provider value={{ user, loading, signIn, signUp, signOut }}>
