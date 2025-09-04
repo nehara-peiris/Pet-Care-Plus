@@ -1,62 +1,42 @@
-import { View, Text, FlatList, Image, Pressable } from "react-native";
-import { Link } from "expo-router";
-import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { db } from "@/lib/firebase";
-import { Pet } from "@/types/pet";
+import { FlatList, Image, Pressable, Text, TextInput, View } from "react-native";
+import { demoPets } from "@/services/data";
 
-export default function PetsPage() {
-  const [pets, setPets] = useState<Pet[]>([]);
-  const user = getAuth().currentUser;
-
-  useEffect(() => {
-    const load = async () => {
-      if (!user) return;
-      const snap = await getDocs(collection(db, "users", user.uid, "pets"));
-      setPets(
-        snap.docs.map((d) => ({ id: d.id, ...d.data() } as Pet))
-      );
-    };
-    load();
-  }, [user]);
-
+export default function Pets() {
   return (
-    <View className="flex-1 p-4">
-      <FlatList
-        data={pets}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Link href={`/(tabs)/pets/${item.id}`} asChild>
-            <Pressable>
-              <View className="flex-row items-center bg-white p-3 rounded-xl mb-3">
-                <Image
-                  source={{
-                    uri: item.avatarUri || "https://placehold.co/100",
-                  }}
-                  className="w-16 h-16 rounded-full mr-3"
-                />
-                <View>
-                  <Text className="text-lg font-semibold">{item.name}</Text>
-                  <Text className="text-sm text-gray-500">{item.species}</Text>
-                </View>
-              </View>
-            </Pressable>
-          </Link>
-        )}
-        ListEmptyComponent={
-          <Text className="text-center text-gray-500 mt-10">
-            No pets yet. Add one!
-          </Text>
-        }
+    <View className="flex-1 bg-black px-4 pt-10 gap-4">
+      <Text className="text-white text-2xl font-semibold">Your Pets</Text>
+
+      <TextInput
+        placeholder="Search by name or species"
+        placeholderTextColor="#9ca3af"
+        className="bg-white/10 text-white px-3 py-2 rounded"
       />
-      <Link href="/(tabs)/pets/add" asChild>
-        <Pressable className="bg-green-600 py-3 rounded-xl mt-4">
-          <Text className="text-white text-center font-semibold text-base">
-            + Add Pet
-          </Text>
-        </Pressable>
-      </Link>
+
+      <FlatList
+        data={demoPets}
+        keyExtractor={(p) => p.id}
+        contentContainerStyle={{ gap: 12, paddingBottom: 20 }}
+        renderItem={({ item }) => (
+          <View className="flex-row gap-3 items-center bg-white/5 rounded-xl p-3">
+            <Image
+              source={{ uri: item.avatarUrl || "https://placekitten.com/128/128" }}
+              className="w-14 h-14 rounded-full"
+            />
+            <View className="flex-1">
+              <Text className="text-white font-medium">{item.name}</Text>
+              <Text className="text-white/60 text-xs">{item.species} • {item.weightKg ?? "?"} kg</Text>
+              <Text className="text-white/50 text-xs">Next vet: {item.nextVetVisit ?? "—"}</Text>
+            </View>
+            <Pressable className="bg-blue-600 px-3 py-1.5 rounded">
+              <Text className="text-white text-sm">Schedule</Text>
+            </Pressable>
+          </View>
+        )}
+      />
+
+      <Pressable className="self-center bg-blue-500 px-5 py-3 rounded-xl">
+        <Text className="text-white font-medium">Add Pet</Text>
+      </Pressable>
     </View>
   );
 }

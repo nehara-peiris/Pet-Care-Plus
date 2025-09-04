@@ -1,15 +1,13 @@
-import { View, Text, Pressable } from 'react-native';
-import React from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { View, Text, Pressable } from "react-native";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
   return (
-    <View className="flex-1 p-5">
-      <Text className="text-xl font-bold mb-3">Settings</Text>
-      <Text className="text-gray-600 mb-6">Signed in as {user?.email}</Text>
-      <Pressable onPress={signOut} className="bg-red-600 p-3 rounded">
-        <Text className="text-white text-center">Logout</Text>
+    <View style={{ flex:1, alignItems:"center", justifyContent:"center" }}>
+      <Text style={{ marginBottom: 12 }}>{user?.email}</Text>
+      <Pressable onPress={signOut} style={{ paddingHorizontal:16, paddingVertical:10, backgroundColor:"#ef4444", borderRadius:8 }}>
+        <Text style={{ color:"#fff" }}>Sign out</Text>
       </Pressable>
     </View>
   );
