@@ -3,13 +3,14 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { db } from "../../lib/firebase";
 import { collection, addDoc, getDocs, orderBy, query, updateDoc, doc, deleteDoc, where } from "firebase/firestore";
 import type { Reminder } from "../../types/reminder";
+import { demoReminders } from "../../services/data";
 
 type State = {
   items: Reminder[];
   loading: boolean;
   error?: string | null;
 };
-const initialState: State = { items: [], loading: false, error: null };
+const initialState: State = { items: demoReminders, loading: false, error: null };
 
 export const fetchReminders = createAsyncThunk<Reminder[], { uid: string; petId?: string }>(
   "reminders/fetch",

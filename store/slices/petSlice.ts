@@ -3,6 +3,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import type { Pet } from "../../types/pet";
+import { demoPets } from "../../services/data";
 
 type State = {
   items: Pet[];
@@ -10,7 +11,7 @@ type State = {
   error?: string | null;
 };
 
-const initialState: State = { items: [], loading: false, error: null };
+const initialState: State = { items: demoPets, loading: false, error: null };
 
 export const fetchPets = createAsyncThunk<Pet[], { uid: string }>(
   "pets/fetch",

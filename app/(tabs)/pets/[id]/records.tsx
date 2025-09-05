@@ -4,11 +4,12 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../../../store";
 import EmptyState from "../../../../components/EmptyState";
 import { Link } from "expo-router";
+import { Record } from "../../../../types/record";
 
 export default function PetRecords() {
   const { id } = useLocalSearchParams();
   const records = useSelector((s: RootState) =>
-    s.records.items.filter((r) => r.petId === id)
+    s.records.items.filter((r: Record) => r.petId === id)
   );
 
   if (!records.length) return <EmptyState message="No records uploaded." />;

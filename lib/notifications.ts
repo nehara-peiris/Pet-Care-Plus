@@ -22,6 +22,9 @@ export async function scheduleLocal(when: number, title: string, body: string) {
   await ensurePermission();
   return Notifications.scheduleNotificationAsync({
     content: { title, body },
-    trigger: new Date(when), 
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: new Date(when),
+    },
   });
 }
