@@ -1,8 +1,10 @@
-import { Redirect } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
+// app/index.tsx
+import { View, Text } from "react-native";
 
-export default function Index() {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-  return <Redirect href={user ? "/(tabs)" : "/(auth)/login"} />;
+export default function Home() {
+  return (
+    <View className="flex-1 items-center justify-center bg-black">
+      <Text className="text-white text-2xl">Welcome to PetCarePlus 🐾</Text>
+    </View>
+  );
 }

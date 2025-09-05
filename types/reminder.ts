@@ -1,3 +1,13 @@
-export type Repeat = { freq: 'once'|'daily'|'weekly'|'monthly'; byWeekday?: number[]; };
-export type Reminder = { id: string; petId: string; kind: 'meds'|'feed'|'walk'|'groom'|'vax'|'deworm';
-  timeIso: string; repeat: Repeat; note?: string; enabled: boolean; };
+// types/reminder.ts
+export type Reminder = {
+  id: string;
+  petId: string;
+  type: "vaccine" | "med" | "groom" | "walk" | "vet" | "other";
+  title: string;
+  date: number;            // next due timestamp
+  repeat?: "none" | "daily" | "weekly" | "monthly";
+  done?: boolean;
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+};

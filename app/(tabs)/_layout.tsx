@@ -1,23 +1,19 @@
+// app/(tabs)/_layout.tsx
 import { Tabs, Redirect } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
 
-export default function TabsLayout() {
-  const { user } = useAuth();
+function TabsLayout() {
+  const user = useSelector((s: RootState) => s.auth.user);
   if (!user) return <Redirect href="/(auth)/login" />;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#60a5fa",
-        tabBarInactiveTintColor: "#9ca3af",
-        tabBarStyle: { backgroundColor: "#0a0a0a", borderTopColor: "rgba(255,255,255,0.06)" },
-        tabBarLabelStyle: { fontSize: 12 },
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: "Home" }} />
+    <Tabs screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="dashboard" options={{ title: "Dashboard" }} />
       <Tabs.Screen name="pets/index" options={{ title: "Pets" }} />
       <Tabs.Screen name="settings/index" options={{ title: "Settings" }} />
     </Tabs>
   );
 }
+
+export default TabsLayout

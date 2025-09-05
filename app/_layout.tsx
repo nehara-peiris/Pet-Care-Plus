@@ -1,11 +1,10 @@
-import { Stack } from "expo-router";
-import { AuthProvider } from "@/context/AuthContext";
-import "@/global.css";
-
-export default function RootLayout() {
+import { Tabs } from "expo-router";
+export default function TabsLayout() {
   return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }} />
-    </AuthProvider>
+    <Tabs>
+      <Tabs.Screen name="dashboard" options={{ title: "Dashboard" }} />
+      <Tabs.Screen name="pets/index" options={{ title: "Pets" }} />
+      <Tabs.Screen name="settings/index" options={{ title: "Settings" }} />
+    </Tabs>
   );
 }

@@ -1,31 +1,97 @@
-import { Link, router } from "expo-router";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
+// app/(auth)/register.tsx
 import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { View, Text, TextInput, Pressable, ActivityIndicator } from "react-native";
+import { Link, Redirect } from "expo-router";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth, db } from "../../lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store";
 
 export default function Register() {
-  const { signUp } = useAuth();
-  const [email, setEmail] = useState("");
-  const [pw, setPw] = useState("");
+  const user = useSelector((s: RootState) => s.auth.user);
+  if (user) return <Redirect href="/(tabs)/dashboard" />;
 
-  const onSubmit = async () => {
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const onChange = (k: keyof typeof form, v: string) => setForm({ ...form, [k]: v });
+
+  const submit = async () => {
+    setErr(null);
+    if (!form.email || !form.password || !form.name) {
+      setErr("Please fill all fields.");
+      return;
+    }
     try {
-      await signUp(email, pw);
-      router.replace("/(tabs)");
+      setLoading(true);
+      const cred = await createUserWithEmailAndPassword(auth, form.email.trim(), form.password);
+      await updateProfile(cred.user, { displayName: form.name.trim() });
+
+      // optional user profile doc
+      await setDoc(doc(db, "users", cred.user.uid), {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        createdAt: Date.now(),
+      });
     } catch (e: any) {
-      Alert.alert("Sign up failed", e?.message ?? "Please try again.");
+      setErr(e?.message ?? "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View className="flex-1 bg-black items-center justify-center gap-4 px-6">
-      <Text className="text-white text-3xl font-semibold">Create account</Text>
-      <TextInput className="w-80 bg-white/10 text-white px-3 py-2 rounded" placeholder="Email" placeholderTextColor="#aaa" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-      <TextInput className="w-80 bg-white/10 text-white px-3 py-2 rounded" placeholder="Password" placeholderTextColor="#aaa" secureTextEntry value={pw} onChangeText={setPw} />
-      <Pressable className="w-80 items-center justify-center rounded bg-blue-600 py-3" onPress={onSubmit}>
-        <Text className="text-white font-medium">Sign up</Text>
+    <View className="flex-1 justify-center px-6 bg-black">
+      <Text className="text-3xl font-bold text-white mb-8">Create account</Text>
+
+      <Text className="text-white mb-2">Full name</Text>
+      <TextInput
+        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-4"
+        placeholder="e.g., Nehara Peiris"
+        placeholderTextColor="#888"
+        autoCapitalize="words"
+        value={form.name}
+        onChangeText={(t) => onChange("name", t)}
+      />
+
+      <Text className="text-white mb-2">Email</Text>
+      <TextInput
+        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-4"
+        placeholder="name@email.com"
+        placeholderTextColor="#888"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        value={form.email}
+        onChangeText={(t) => onChange("email", t)}
+      />
+
+      <Text className="text-white mb-2">Password</Text>
+      <TextInput
+        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-4"
+        placeholder="••••••••"
+        placeholderTextColor="#888"
+        secureTextEntry
+        value={form.password}
+        onChangeText={(t) => onChange("password", t)}
+      />
+
+      {err ? <Text className="text-red-400 mb-3">{err}</Text> : null}
+
+      <Pressable
+        onPress={submit}
+        disabled={loading}
+        className="bg-teal-500 rounded-2xl py-3 items-center"
+      >
+        {loading ? <ActivityIndicator /> : <Text className="text-black font-semibold">Sign up</Text>}
       </Pressable>
-      <Link href="/(auth)/login" className="text-blue-400 mt-2">Already have an account?</Link>
+
+      <View className="flex-row mt-6">
+        <Text className="text-neutral-400 mr-2">Already have an account?</Text>
+        <Link href="/(auth)/login" className="text-teal-400">Log in</Link>
+      </View>
     </View>
   );
 }
+

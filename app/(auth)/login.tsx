@@ -1,31 +1,64 @@
-import { Link, router } from "expo-router";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
 import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { View, Text, TextInput, Pressable, ActivityIndicator } from "react-native";
+import { Link, Redirect } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useSelector } from "react-redux";
+import { auth } from "../../lib/firebase";
+import type { RootState } from "../../store";
 
 export default function Login() {
-  const { signIn } = useAuth();
-  const [email, setEmail] = useState("");
-  const [pw, setPw] = useState("");
+  const user = useSelector((s: RootState) => s.auth.user);
+  if (user) return <Redirect href="/(tabs)/dashboard" />;
 
-  const onSubmit = async () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = async () => {
+    setErr(null);
     try {
-      await signIn(email, pw);
-      router.replace("/(tabs)");
+      setLoading(true);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (e: any) {
-      Alert.alert("Sign in failed", e?.message ?? "Please try again.");
+      setErr(e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View className="flex-1 bg-black items-center justify-center gap-4 px-6">
-      <Text className="text-white text-3xl font-semibold">Welcome back</Text>
-      <TextInput className="w-80 bg-white/10 text-white px-3 py-2 rounded" placeholder="Email" placeholderTextColor="#aaa" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-      <TextInput className="w-80 bg-white/10 text-white px-3 py-2 rounded" placeholder="Password" placeholderTextColor="#aaa" secureTextEntry value={pw} onChangeText={setPw} />
-      <Pressable className="w-80 items-center justify-center rounded bg-blue-600 py-3" onPress={onSubmit}>
-        <Text className="text-white font-medium">Sign in</Text>
+    <View className="flex-1 justify-center px-6 bg-black">
+      <Text className="text-3xl font-bold text-white mb-8">Login</Text>
+
+      <TextInput
+        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-3"
+        placeholder="Email"
+        placeholderTextColor="#888"
+        autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
+      />
+
+      <TextInput
+        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-3"
+        placeholder="Password"
+        placeholderTextColor="#888"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
+
+      {err && <Text className="text-red-400 mb-3">{err}</Text>}
+
+      <Pressable onPress={submit} disabled={loading} className="bg-teal-500 rounded-2xl py-3 items-center">
+        {loading ? <ActivityIndicator /> : <Text className="text-black font-semibold">Login</Text>}
       </Pressable>
-      <Link href="/(auth)/register" className="text-blue-400 mt-2">Create an account</Link>
+
+      <View className="flex-row mt-6">
+        <Text className="text-neutral-400 mr-2">Don’t have an account?</Text>
+        <Link href="/(auth)/register" className="text-teal-400">Register</Link>
+      </View>
     </View>
   );
 }
