@@ -1,17 +1,17 @@
-import { Tabs } from "expo-router";
+import { Stack } from "expo-router";
 import { Provider } from "react-redux";
 import { store } from "../store";
 import { AuthProvider } from "../context/AuthContext";
 
-export default function TabsLayout() {
+export default function RootLayout() {
   return (
     <Provider store={store}>
       <AuthProvider>
-        <Tabs>
-          <Tabs.Screen name="dashboard" options={{ title: "Dashboard" }} />
-          <Tabs.Screen name="pets/index" options={{ title: "Pets" }} />
-          <Tabs.Screen name="settings/index" options={{ title: "Settings" }} />
-        </Tabs>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="index" />
+        </Stack>
       </AuthProvider>
     </Provider>
   );

@@ -1,12 +1,7 @@
 // app/(tabs)/_layout.tsx
-import { Tabs, Redirect } from "expo-router";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store";
+import { Tabs } from "expo-router";
 
 function TabsLayout() {
-  const user = useSelector((s: RootState) => s.auth.user);
-  if (!user) return <Redirect href="/(auth)/login" />;
-
   return (
     <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="dashboard" options={{ title: "Dashboard" }} />
@@ -16,4 +11,4 @@ function TabsLayout() {
   );
 }
 
-export default TabsLayout
+export default TabsLayout;
