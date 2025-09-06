@@ -3,8 +3,9 @@ import { View, Text, TextInput, Pressable, ActivityIndicator } from "react-nativ
 import { Link, useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useSelector } from "react-redux";
-import { auth } from "../../lib/firebase";
 import type { RootState } from "../../store";
+import { auth } from "../../lib/firebase";
+
 
 export default function Login() {
   const user = useSelector((s: RootState) => s.auth.user);
@@ -18,7 +19,7 @@ export default function Login() {
     if (user) {
       router.replace("/(tabs)/dashboard");
     }
-  }, [user]);
+  }, [user, router]);
 
   if (user) {
     return <ActivityIndicator />;

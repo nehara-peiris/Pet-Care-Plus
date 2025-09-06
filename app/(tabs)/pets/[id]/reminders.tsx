@@ -1,10 +1,9 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, Link } from "expo-router";
 import { FlatList, View } from "react-native";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../../store";
 import ReminderItem from "../../../../components/ReminderItem";
 import EmptyState from "../../../../components/EmptyState";
-import { Link } from "expo-router";
 
 export default function PetReminders() {
   const { id } = useLocalSearchParams();

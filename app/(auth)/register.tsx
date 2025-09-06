@@ -10,11 +10,12 @@ import type { RootState } from "../../store";
 
 export default function Register() {
   const user = useSelector((s: RootState) => s.auth.user);
-  if (user) return <Redirect href="/(tabs)/dashboard" />;
 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  if (user) return <Redirect href="/(tabs)/dashboard" />;
 
   const onChange = (k: keyof typeof form, v: string) => setForm({ ...form, [k]: v });
 

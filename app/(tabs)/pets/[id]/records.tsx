@@ -1,9 +1,8 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, Link } from "expo-router";
 import { FlatList, View, Text } from "react-native";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../../store";
 import EmptyState from "../../../../components/EmptyState";
-import { Link } from "expo-router";
 import { Record } from "../../../../types/record";
 
 export default function PetRecords() {

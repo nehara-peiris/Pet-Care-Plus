@@ -1,15 +1,16 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "types": ["./firebase.d.ts", "react", "react-native"],
+    "strict": true,
+    "baseUrl": ".",
     "target": "ES2020",
     "lib": [
       "ES2020"
     ],
     "jsx": "react-jsx",
     "moduleResolution": "Bundler",
-    "strict": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
@@ -23,6 +24,8 @@
     "services",
     "types",
     "global.css",
-    "nativewind-env.d.ts"
-, "lib/firebase.ts", "lib/storage.ts"  ]
+    "nativewind-env.d.ts",
+    "firebase.d.ts",
+    "lib/firebase.ts", 
+    "lib/storage.ts"  ]
 }

@@ -52,7 +52,6 @@ export default function ReminderForm({ mode, petId, initial, onDone }: Props) {
         const created = await dispatch(addReminder({ uid, data: payload })).unwrap();
 
         // schedule local notification
-        const petName = title; // you can pass real pet name from parent if you like
         await scheduleLocal(when, "PetCare+ Reminder", `${created.title} for your pet`);
       } else {
         const patch: Partial<Reminder> = {
