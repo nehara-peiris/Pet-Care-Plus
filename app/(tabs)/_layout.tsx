@@ -1,7 +1,18 @@
-// app/(tabs)/_layout.tsx
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
+import { useAuth } from "../../context/AuthContext";
+import { Text } from "react-native";
 
-function TabsLayout() {
+export default function TabsLayout() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <Text>Loading...</Text>;
+  }
+
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
+
   return (
     <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="dashboard" options={{ title: "Dashboard" }} />
@@ -10,5 +21,3 @@ function TabsLayout() {
     </Tabs>
   );
 }
-
-export default TabsLayout;
