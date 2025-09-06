@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, TextInput, Pressable, ActivityIndicator } from "react-native";
-import { Link, Redirect } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useSelector } from "react-redux";
 import { auth } from "../../lib/firebase";
@@ -8,12 +8,21 @@ import type { RootState } from "../../store";
 
 export default function Login() {
   const user = useSelector((s: RootState) => s.auth.user);
-  if (user) return <Redirect href="/(tabs)/dashboard" />;
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.replace("/(tabs)/dashboard");
+    }
+  }, [user]);
+
+  if (user) {
+    return <ActivityIndicator />;
+  }
 
   const submit = async () => {
     setErr(null);

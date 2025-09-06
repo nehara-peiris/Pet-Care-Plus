@@ -61,7 +61,4 @@ const auth = initAuth();
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-console.log("FB project:", process.env.EXPO_PUBLIC_FB_PROJECT_ID);
-console.log("FB bucket:", process.env.EXPO_PUBLIC_FB_STORAGE_BUCKET);
-
 export { app, auth, db, storage };
