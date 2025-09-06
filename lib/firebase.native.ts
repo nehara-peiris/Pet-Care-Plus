@@ -8,6 +8,7 @@ import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 // @ts-ignore - Suppress TS error for missing type declarations
 const { getReactNativePersistence } = require('firebase/auth/react-native');
 
+
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FB_API_KEY,
   authDomain: process.env.EXPO_PUBLIC_FB_AUTH_DOMAIN,

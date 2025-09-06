@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useEffect } from "react";
+import { createContext, useContext, ReactNode, useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { onAuthStateChanged } from "firebase/auth";
 import { RootState } from "../store";
@@ -18,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -26,12 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         dispatch(clearUser());
       }
+      setIsLoading(false);
     });
     return unsub;
   }, [dispatch]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading: user === undefined }}>
+    <AuthContext.Provider value={{ user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

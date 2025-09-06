@@ -1,12 +1,8 @@
-// lib/firebase.native.ts
+// lib/firebase.web.ts
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { initializeAuth, Auth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
-import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
-
-// @ts-ignore - Suppress TS error for missing type declarations
-const { getReactNativePersistence } = require('firebase/auth/react-native');
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FB_API_KEY,
@@ -19,9 +15,8 @@ const firebaseConfig = {
 
 const app: FirebaseApp = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
 
-const auth: Auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
-});
+const auth: Auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence);
 
 const db: Firestore = getFirestore(app);
 const storage: FirebaseStorage = getStorage(app);

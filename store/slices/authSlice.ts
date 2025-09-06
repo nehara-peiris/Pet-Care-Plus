@@ -1,6 +1,6 @@
 // store/slices/authSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-type AuthUser = { uid: string; email: string };
+type AuthUser = { uid: string; email: string | null };
 type State = { user: AuthUser | null };
 const initialState: State = { user: null };
 
