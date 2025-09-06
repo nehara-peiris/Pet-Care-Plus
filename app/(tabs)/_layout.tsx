@@ -14,7 +14,14 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: { backgroundColor: "#1E1E1E" },
+        tabBarActiveTintColor: "#389AFE",
+        tabBarInactiveTintColor: "#A0A0A0",
+      }}
+    >
       <Tabs.Screen name="dashboard" options={{ title: "Dashboard" }} />
       <Tabs.Screen name="pets/index" options={{ title: "Pets" }} />
       <Tabs.Screen name="settings/index" options={{ title: "Settings" }} />

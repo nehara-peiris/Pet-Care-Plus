@@ -1,12 +1,9 @@
 // lib/firebase.native.ts
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { initializeAuth, Auth } from "firebase/auth";
+import { initializeAuth, Auth, getReactNativePersistence } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
-
-// @ts-ignore - Suppress TS error for missing type declarations
-const { getReactNativePersistence } = require('firebase/auth/react-native');
 
 
 const firebaseConfig = {

@@ -43,12 +43,12 @@ export default function Register() {
   };
 
   return (
-    <View className="flex-1 justify-center px-6 bg-black">
-      <Text className="text-3xl font-bold text-white mb-8">Create account</Text>
+    <View className="flex-1 justify-center px-6 bg-primary">
+      <Text className="text-3xl font-bold text-text-primary mb-8">Create account</Text>
 
-      <Text className="text-white mb-2">Full name</Text>
+      <Text className="text-text-primary mb-2">Full name</Text>
       <TextInput
-        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-4"
+        className="bg-secondary rounded-xl px-4 py-3 text-text-primary mb-4"
         placeholder="e.g., Nehara Peiris"
         placeholderTextColor="#888"
         autoCapitalize="words"
@@ -56,9 +56,9 @@ export default function Register() {
         onChangeText={(t) => onChange("name", t)}
       />
 
-      <Text className="text-white mb-2">Email</Text>
+      <Text className="text-text-primary mb-2">Email</Text>
       <TextInput
-        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-4"
+        className="bg-secondary rounded-xl px-4 py-3 text-text-primary mb-4"
         placeholder="name@email.com"
         placeholderTextColor="#888"
         keyboardType="email-address"
@@ -67,9 +67,9 @@ export default function Register() {
         onChangeText={(t) => onChange("email", t)}
       />
 
-      <Text className="text-white mb-2">Password</Text>
+      <Text className="text-text-primary mb-2">Password</Text>
       <TextInput
-        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-4"
+        className="bg-secondary rounded-xl px-4 py-3 text-text-primary mb-4"
         placeholder="••••••••"
         placeholderTextColor="#888"
         secureTextEntry
@@ -82,14 +82,14 @@ export default function Register() {
       <Pressable
         onPress={submit}
         disabled={loading}
-        className="bg-teal-500 rounded-2xl py-3 items-center"
+        className="bg-accent rounded-2xl py-3 items-center"
       >
-        {loading ? <ActivityIndicator /> : <Text className="text-black font-semibold">Sign up</Text>}
+        {loading ? <ActivityIndicator /> : <Text className="text-primary font-semibold">Sign up</Text>}
       </Pressable>
 
       <View className="flex-row mt-6">
-        <Text className="text-neutral-400 mr-2">Already have an account?</Text>
-        <Link href="/(auth)/login" className="text-teal-400">Log in</Link>
+        <Text className="text-text-secondary mr-2">Already have an account?</Text>
+        <Link href="/(auth)/login" className="text-accent">Log in</Link>
       </View>
     </View>
   );

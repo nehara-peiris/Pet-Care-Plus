@@ -37,11 +37,11 @@ export default function Login() {
   };
 
   return (
-    <View className="flex-1 justify-center px-6 bg-black">
-      <Text className="text-3xl font-bold text-white mb-8">Login</Text>
+    <View className="flex-1 justify-center px-6 bg-primary">
+      <Text className="text-3xl font-bold text-text-primary mb-8">Login</Text>
 
       <TextInput
-        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-3"
+        className="bg-secondary rounded-xl px-4 py-3 text-text-primary mb-3"
         placeholder="Email"
         placeholderTextColor="#888"
         autoCapitalize="none"
@@ -50,7 +50,7 @@ export default function Login() {
       />
 
       <TextInput
-        className="bg-neutral-900 rounded-xl px-4 py-3 text-white mb-3"
+        className="bg-secondary rounded-xl px-4 py-3 text-text-primary mb-3"
         placeholder="Password"
         placeholderTextColor="#888"
         secureTextEntry
@@ -60,13 +60,13 @@ export default function Login() {
 
       {err && <Text className="text-red-400 mb-3">{err}</Text>}
 
-      <Pressable onPress={submit} disabled={loading} className="bg-teal-500 rounded-2xl py-3 items-center">
-        {loading ? <ActivityIndicator /> : <Text className="text-black font-semibold">Login</Text>}
+      <Pressable onPress={submit} disabled={loading} className="bg-accent rounded-2xl py-3 items-center">
+        {loading ? <ActivityIndicator /> : <Text className="text-primary font-semibold">Login</Text>}
       </Pressable>
 
       <View className="flex-row mt-6">
-        <Text className="text-neutral-400 mr-2">Don’t have an account?</Text>
-        <Link href="/(auth)/register" className="text-teal-400">Register</Link>
+        <Text className="text-text-secondary mr-2">Don’t have an account?</Text>
+        <Link href="/(auth)/register" className="text-accent">Register</Link>
       </View>
     </View>
   );

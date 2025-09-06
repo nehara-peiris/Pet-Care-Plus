@@ -110,9 +110,9 @@ export default function PetForm({ mode, initial, onDone }: Props) {
 
   return (
     <View className="gap-3">
-      <Text className="text-neutral-300">Pet name</Text>
+      <Text className="text-text-secondary">Pet name</Text>
       <TextInput
-        className="bg-neutral-900 rounded-2xl px-4 py-3 text-white"
+        className="bg-secondary rounded-2xl px-4 py-3 text-text-primary"
         value={name}
         onChangeText={setName}
         placeholder="Coco"
@@ -121,9 +121,9 @@ export default function PetForm({ mode, initial, onDone }: Props) {
 
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Text className="text-neutral-300">Species</Text>
+          <Text className="text-text-secondary">Species</Text>
           <TextInput
-            className="bg-neutral-900 rounded-2xl px-4 py-3 text-white"
+            className="bg-secondary rounded-2xl px-4 py-3 text-text-primary"
             value={species}
             onChangeText={setSpecies}
             placeholder="Dog / Cat"
@@ -131,9 +131,9 @@ export default function PetForm({ mode, initial, onDone }: Props) {
           />
         </View>
         <View className="flex-1">
-          <Text className="text-neutral-300">Breed</Text>
+          <Text className="text-text-secondary">Breed</Text>
           <TextInput
-            className="bg-neutral-900 rounded-2xl px-4 py-3 text-white"
+            className="bg-secondary rounded-2xl px-4 py-3 text-text-primary"
             value={breed}
             onChangeText={setBreed}
             placeholder="Labrador"
@@ -144,9 +144,9 @@ export default function PetForm({ mode, initial, onDone }: Props) {
 
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Text className="text-neutral-300">Sex</Text>
+          <Text className="text-text-secondary">Sex</Text>
           <TextInput
-            className="bg-neutral-900 rounded-2xl px-4 py-3 text-white"
+            className="bg-secondary rounded-2xl px-4 py-3 text-text-primary"
             value={sex}
             onChangeText={(t) => setSex((t as any) || "Unknown")}
             placeholder="Male/Female"
@@ -154,9 +154,9 @@ export default function PetForm({ mode, initial, onDone }: Props) {
           />
         </View>
         <View className="flex-1">
-          <Text className="text-neutral-300">DOB (YYYY-MM-DD)</Text>
+          <Text className="text-text-secondary">DOB (YYYY-MM-DD)</Text>
           <TextInput
-            className="bg-neutral-900 rounded-2xl px-4 py-3 text-white"
+            className="bg-secondary rounded-2xl px-4 py-3 text-text-primary"
             value={dob}
             onChangeText={setDob}
             placeholder="2022-05-01"
@@ -165,9 +165,9 @@ export default function PetForm({ mode, initial, onDone }: Props) {
         </View>
       </View>
 
-      <Text className="text-neutral-300">Weight (kg)</Text>
+      <Text className="text-text-secondary">Weight (kg)</Text>
       <TextInput
-        className="bg-neutral-900 rounded-2xl px-4 py-3 text-white"
+        className="bg-secondary rounded-2xl px-4 py-3 text-text-primary"
         keyboardType="decimal-pad"
         value={weight}
         onChangeText={setWeight}
@@ -178,9 +178,9 @@ export default function PetForm({ mode, initial, onDone }: Props) {
       <View className="items-start mt-2">
         <Pressable
           onPress={pickImage}
-          className="bg-neutral-800 rounded-2xl px-4 py-3"
+          className="bg-secondary rounded-2xl px-4 py-3"
         >
-          <Text className="text-white">{localImage ? "Change photo" : "Pick photo"}</Text>
+          <Text className="text-text-primary">{localImage ? "Change photo" : "Pick photo"}</Text>
         </Pressable>
       </View>
 
@@ -195,12 +195,12 @@ export default function PetForm({ mode, initial, onDone }: Props) {
       <Pressable
         onPress={submit}
         disabled={loading}
-        className="bg-teal-500 rounded-2xl py-3 items-center mt-4"
+        className="bg-accent rounded-2xl py-3 items-center mt-4"
       >
         {loading ? (
           <ActivityIndicator />
         ) : (
-          <Text className="text-black font-semibold">
+          <Text className="text-primary font-semibold">
             {mode === "create" ? "Add pet" : "Save changes"}
           </Text>
         )}

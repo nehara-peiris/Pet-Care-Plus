@@ -11,13 +11,13 @@ export default function PetsList() {
   if (!pets.length) return <EmptyState message="No pets yet. Add one!" />;
 
   return (
-    <View className="flex-1 bg-black p-4">
+    <View className="flex-1 bg-primary p-4">
       <FlatList
         data={pets}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <PetCard pet={item} />}
       />
-      <Link href="/(tabs)/pets/add" className="bg-teal-500 p-3 rounded-2xl text-center text-black mt-4">
+      <Link href="/(tabs)/pets/add" className="bg-accent p-3 rounded-2xl text-center text-primary mt-4">
         + Add Pet
       </Link>
     </View>
