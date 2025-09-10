@@ -1,98 +1,76 @@
-// app/(auth)/register.tsx
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { useRouter } from "expo-router";
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, ActivityIndicator } from "react-native";
-import { Link, Redirect } from "expo-router";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth, db } from "../../lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../store";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../lib/firebase";
 
-export default function Register() {
-  const user = useSelector((s: RootState) => s.auth.user);
+export default function RegisterScreen() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  if (user) return <Redirect href="/(tabs)/dashboard" />;
-
-  const onChange = (k: keyof typeof form, v: string) => setForm({ ...form, [k]: v });
-
-  const submit = async () => {
-    setErr(null);
-    if (!form.email || !form.password || !form.name) {
-      setErr("Please fill all fields.");
+  const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match!");
       return;
     }
     try {
-      setLoading(true);
-      const cred = await createUserWithEmailAndPassword(auth, form.email.trim(), form.password);
-      await updateProfile(cred.user, { displayName: form.name.trim() });
-
-      // optional user profile doc
-      await setDoc(doc(db, "users", cred.user.uid), {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        createdAt: Date.now(),
-      });
-    } catch (e: any) {
-      setErr(e?.message ?? "Registration failed");
-    } finally {
-      setLoading(false);
+      await createUserWithEmailAndPassword(auth, email, password);
+      router.replace("/(tabs)/dashboard");
+    } catch (err: any) {
+      Alert.alert("Register Failed", err.message);
     }
   };
 
   return (
-    <View className="flex-1 justify-center px-6 bg-primary">
-      <Text className="text-3xl font-bold text-text-primary mb-8">Create account</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Register</Text>
 
-      <Text className="text-text-primary mb-2">Full name</Text>
-      <TextInput
-        className="bg-secondary rounded-xl px-4 py-3 text-text-primary mb-4"
-        placeholder="e.g., Nehara Peiris"
-        placeholderTextColor="#888"
-        autoCapitalize="words"
-        value={form.name}
-        onChangeText={(t) => onChange("name", t)}
-      />
+      <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" />
 
-      <Text className="text-text-primary mb-2">Email</Text>
-      <TextInput
-        className="bg-secondary rounded-xl px-4 py-3 text-text-primary mb-4"
-        placeholder="name@email.com"
-        placeholderTextColor="#888"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={form.email}
-        onChangeText={(t) => onChange("email", t)}
-      />
-
-      <Text className="text-text-primary mb-2">Password</Text>
-      <TextInput
-        className="bg-secondary rounded-xl px-4 py-3 text-text-primary mb-4"
-        placeholder="••••••••"
-        placeholderTextColor="#888"
-        secureTextEntry
-        value={form.password}
-        onChangeText={(t) => onChange("password", t)}
-      />
-
-      {err ? <Text className="text-red-400 mb-3">{err}</Text> : null}
-
-      <Pressable
-        onPress={submit}
-        disabled={loading}
-        className="bg-accent rounded-2xl py-3 items-center"
-      >
-        {loading ? <ActivityIndicator /> : <Text className="text-primary font-semibold">Sign up</Text>}
-      </Pressable>
-
-      <View className="flex-row mt-6">
-        <Text className="text-text-secondary mr-2">Already have an account?</Text>
-        <Link href="/(auth)/login" className="text-accent">Log in</Link>
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          placeholder="Password"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Text style={styles.toggle}>{showPassword ? "Hide" : "Show"}</Text>
+        </TouchableOpacity>
       </View>
+
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          placeholder="Confirm Password"
+          secureTextEntry={!showConfirm}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+        <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+          <Text style={styles.toggle}>{showConfirm ? "Hide" : "Show"}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Button title="Register" onPress={handleRegister} />
+
+      <Text style={styles.link} onPress={() => router.push("/(auth)/login")}>
+        Already have an account? Login
+      </Text>
     </View>
   );
 }
 
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, justifyContent: "center", backgroundColor: "#fff" },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+  input: { borderWidth: 1, borderColor: "#ccc", padding: 12, borderRadius: 8, marginBottom: 15 },
+  passwordContainer: { flexDirection: "row", alignItems: "center", marginBottom: 15 },
+  toggle: { marginLeft: 10, color: "blue", fontWeight: "500" },
+  link: { marginTop: 20, color: "blue", textAlign: "center" },
+});

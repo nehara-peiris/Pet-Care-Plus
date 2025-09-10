@@ -1,21 +1,49 @@
-import { View, Text, Image } from 'react-native';
-import { Pet } from '../types/pet';
-import { Link } from 'expo-router';
+import { View, Text, StyleSheet, Image } from "react-native";
 
 type PetCardProps = {
-  pet: Pet;
+  name: string;
+  type: string;
+  imageUrl?: string;
 };
 
-export default function PetCard({ pet }: PetCardProps) {
+export default function PetCard({ name, type, imageUrl }: PetCardProps) {
   return (
-    <Link href={`/(tabs)/pets/${pet.id}/records`}>
-        <View className="bg-secondary p-4 rounded-2xl mb-2 flex-row items-center">
-        {pet.photoUrl && <Image source={{ uri: pet.photoUrl }} className="w-16 h-16 rounded-full mr-4" />}
-        <View>
-            <Text className="text-text-primary text-lg">{pet.name}</Text>
-            <Text className="text-text-secondary">{pet.breed}</Text>
+    <View style={styles.card}>
+      {imageUrl ? (
+        <Image source={{ uri: imageUrl }} style={styles.image} />
+      ) : (
+        <View style={styles.placeholder}>
+          <Text style={styles.placeholderText}>🐾</Text>
         </View>
-        </View>
-    </Link>
+      )}
+      <View>
+        <Text style={styles.name}>{name}</Text>
+        <Text style={styles.type}>{type}</Text>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    marginVertical: 8,
+    backgroundColor: "#eee",
+    borderRadius: 8,
+  },
+  image: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
+  placeholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+    backgroundColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  placeholderText: { fontSize: 22 },
+  name: { fontSize: 18, fontWeight: "bold" },
+  type: { fontSize: 14, color: "gray" },
+});

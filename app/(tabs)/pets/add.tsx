@@ -1,31 +1,73 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { useRouter } from "expo-router";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../../../lib/firebase";
 
-function AddPet() {
+export default function AddPetScreen() {
+  const router = useRouter();
+
   const [name, setName] = useState("");
   const [type, setType] = useState("");
+  const [age, setAge] = useState("");
+  const [breed, setBreed] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
 
-  const save = async () => {
+  const handleAddPet = async () => {
+    if (!name || !type) {
+      Alert.alert("Error", "Name and Type are required!");
+      return;
+    }
+
     try {
-      // TODO: save to Firestore
-      Alert.alert("Saved", "Pet created");
-    } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "Failed");
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert("Error", "You must be logged in to add a pet.");
+        return;
+      }
+
+      await addDoc(collection(db, "pets"), {
+        userId: user.uid,
+        name,
+        type,
+        age,
+        breed,
+        imageUrl,
+        createdAt: serverTimestamp(),
+      });
+
+      Alert.alert("Success", `${name} has been added!`);
+      router.replace("/(tabs)/dashboard");
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
     }
   };
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12 }}>
-      <Text style={{ fontSize: 22, fontWeight: "700" }}>Add Pet</Text>
-      <TextInput placeholder="Name" value={name} onChangeText={setName}
-        style={{ borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 12 }} />
-      <TextInput placeholder="Type (Dog/Cat…)" value={type} onChangeText={setType}
-        style={{ borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 12 }} />
-      <Pressable onPress={save} style={{ backgroundColor: "#21706f", padding: 12, borderRadius: 8 }}>
-        <Text style={{ color: "white", textAlign: "center", fontWeight: "600" }}>Save</Text>
-      </Pressable>
+    <View style={styles.container}>
+      <Text style={styles.title}>Add Pet</Text>
+
+      <TextInput style={styles.input} placeholder="Pet Name" value={name} onChangeText={setName} />
+      <TextInput style={styles.input} placeholder="Type (Dog, Cat, etc.)" value={type} onChangeText={setType} />
+      <TextInput style={styles.input} placeholder="Age" value={age} onChangeText={setAge} keyboardType="numeric" />
+      <TextInput style={styles.input} placeholder="Breed (optional)" value={breed} onChangeText={setBreed} />
+      <TextInput style={styles.input} placeholder="Image URL (optional)" value={imageUrl} onChangeText={setImageUrl} />
+
+      <Button title="Save Pet" onPress={handleAddPet} />
+      <View style={{ marginTop: 10 }} />
+      <Button title="Cancel" onPress={() => router.back()} />
     </View>
   );
 }
 
-export default AddPet
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+});

@@ -13,7 +13,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-const auth = getAuth(app); // ✅ normal web auth
-const db = getFirestore(app);
+const auth = getAuth(app);
+const db = getFirestore(app); 
 
-export { app, auth, db };
+export { auth, db };

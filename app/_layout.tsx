@@ -1,14 +1,11 @@
-import { Slot } from "expo-router";
-import { Provider } from "react-redux";
-import { store } from "../store";
-import { AuthProvider } from "../context/AuthContext";
+import { Stack } from "expo-router";
 
 export default function RootLayout() {
   return (
-    <Provider store={store}>
-      <AuthProvider>
-        <Slot />
-      </AuthProvider>
-    </Provider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />       {/* Welcome */}
+      <Stack.Screen name="(auth)" />     {/* Auth screens */}
+      <Stack.Screen name="(tabs)" />     {/* Dashboard + others */}
+    </Stack>
   );
 }

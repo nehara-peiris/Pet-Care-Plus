@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
 
-export default function PetsIndexScreen() {
+export default function RecordsIndexScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Pets List Screen</Text>

@@ -1,25 +1,27 @@
-import { View, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Button } from "react-native";
 import { useRouter } from "expo-router";
-import { useAuth } from "../context/AuthContext";
-import { useEffect } from "react";
 
-export default function Index() {
-  const { user, isLoading } = useAuth();
+export default function WelcomeScreen() {
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        router.replace("/(tabs)/dashboard");
-      } else {
-        router.replace("/(auth)/login");
-      }
-    }
-  }, [isLoading, user, router]);
-
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <ActivityIndicator size="large" />
+    <View style={styles.container}>
+      <Text style={styles.title}>Welcome to PetCarePlus 🐾</Text>
+      <Button title="Get Started" onPress={() => router.push("/(auth)/login")} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+    gap: 20,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+  },
+});
