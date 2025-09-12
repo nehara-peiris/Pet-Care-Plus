@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Button,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
@@ -27,7 +35,9 @@ export default function RemindersScreen() {
 
     const unsubscribe = onSnapshot(remindersQuery, (snapshot) => {
       const list: Reminder[] = [];
-      snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() } as Reminder));
+      snapshot.forEach((doc) =>
+        list.push({ id: doc.id, ...doc.data() } as Reminder)
+      );
       setReminders(list);
       setLoading(false);
     });
@@ -47,6 +57,11 @@ export default function RemindersScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.heading}>📋 All Reminders</Text>
 
+      <Button
+        title="➕ Add Reminder"
+        onPress={() => router.push("/(tabs)/reminders/add")}
+      />
+
       {reminders.length === 0 ? (
         <Text style={styles.empty}>No reminders yet. Add one!</Text>
       ) : (
@@ -54,12 +69,17 @@ export default function RemindersScreen() {
           <TouchableOpacity
             key={reminder.id}
             style={styles.reminderCard}
-            onPress={() => router.push(`/(tabs)/pets/${reminder.petId}`)}
+            onPress={() =>
+              router.push({
+                pathname: "/(tabs)/reminders/[id]",
+                params: { id: reminder.id },
+              })
+            }
           >
             <Text style={styles.reminderTitle}>{reminder.title}</Text>
-            {reminder.date ? <Text>Date: {reminder.date}</Text> : null}
-            {reminder.time ? <Text>Time: {reminder.time}</Text> : null}
-            <Text>Type: {reminder.type}</Text>
+            {reminder.date ? <Text>📅 {reminder.date}</Text> : null}
+            {reminder.time ? <Text>⏰ {reminder.time}</Text> : null}
+            <Text>📌 {reminder.type}</Text>
           </TouchableOpacity>
         ))
       )}
@@ -69,7 +89,12 @@ export default function RemindersScreen() {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 16, backgroundColor: "#fff" },
-  heading: { fontSize: 24, fontWeight: "bold", marginBottom: 16, textAlign: "center" },
+  heading: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 16,
+    textAlign: "center",
+  },
   empty: { textAlign: "center", marginTop: 20, color: "gray" },
   reminderCard: {
     padding: 14,
@@ -79,6 +104,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 8,
   },
-  reminderTitle: { fontWeight: "bold", marginBottom: 4 },
+  reminderTitle: { fontWeight: "bold", marginBottom: 4, fontSize: 16 },
+  editHint: { marginTop: 6, color: "gray", fontSize: 12 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

@@ -95,7 +95,12 @@ export default function DashboardScreen() {
         reminders.slice(0, 5).map((reminder) => (
           <TouchableOpacity
             key={reminder.id}
-            onPress={() => router.push(`/(tabs)/pets/${reminder.petId}`)}
+            onPress={() =>
+              router.push({
+                pathname: "/(tabs)/reminders/[id]",
+                params: { id: reminder.id },
+              })
+            }
           >
             <View style={styles.reminderCard}>
               <Text style={styles.reminderTitle}>{reminder.title}</Text>
@@ -106,7 +111,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         ))
       )}
-
+      
       <View style={styles.addBtn}>
         <Button title="Add Reminder" onPress={() => router.push("/(tabs)/reminders/add")} />
       </View>
