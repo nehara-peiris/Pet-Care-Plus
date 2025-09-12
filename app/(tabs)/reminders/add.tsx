@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { addDoc, collection, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
-import { scheduleLocal } from "../../../lib/notifications";
+import { registerForPushNotificationsAsync, scheduleReminderNotification } from "../../../lib/notifications";
 
 
 export default function AddReminderScreen() {
@@ -55,12 +55,8 @@ export default function AddReminderScreen() {
         createdAt: serverTimestamp(),
       });
 
-      if (date && time) {
-        const [year, month, day] = date.split("-").map(Number);
-        const [hour, minute] = time.split(":").map(Number);
-        const notificationDate = new Date(year, month - 1, day, hour, minute);
-        await scheduleLocal(notificationDate, title, `Reminder for ${title}`);
-      }
+      await registerForPushNotificationsAsync();
+      await scheduleReminderNotification(title, date, time);
 
       Alert.alert("Success", "Reminder added!");
       router.replace("/(tabs)/dashboard");

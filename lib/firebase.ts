@@ -1,25 +1,19 @@
 import { initializeApp } from "firebase/app";
-import { initializeAuth,getReactNativePersistence,} from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FB_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FB_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FB_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FB_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FB_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FB_APP_ID,
+  apiKey: "AIzaSyAxp7tRj1kzGpQG0SQGydZMN6lvUBvYkZY",
+  authDomain: "petcareplus-d2bbc.firebaseapp.com",
+  projectId: "petcareplus-d2bbc",
+  storageBucket: "petcareplus-d2bbc.appspot.com",
+  messagingSenderId: "705850893246",
+  appId: "1:705850893246:web:f6b47ca0a33bc032c34fef",
 };
-
-import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 
 const app = initializeApp(firebaseConfig);
 
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
-});
+const auth = getAuth(app);
 const db = getFirestore(app);
-const messaging = getMessaging(app);
 
-export { auth, db, messaging };
+export { auth, db };

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Button, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
-import { scheduleLocal } from "../../lib/notifications";
 import PetCard from "../../components/PetCard";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
@@ -110,19 +109,6 @@ export default function DashboardScreen() {
 
       <View style={styles.addBtn}>
         <Button title="Add Reminder" onPress={() => router.push("/(tabs)/reminders/add")} />
-      </View>
-
-      <View style={styles.addBtn}>
-        <Button
-          title="Test Notification"
-          onPress={() => {
-            scheduleLocal(
-              new Date(Date.now() + 1000),
-              "Test Title",
-              "This is a test notification"
-            );
-          }}
-        />
       </View>
     </View>
   );
