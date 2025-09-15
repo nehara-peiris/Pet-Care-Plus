@@ -1,14 +1,13 @@
-// app/(tabs)/records/add.tsx
 import { useState, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   Alert,
   ScrollView,
   Platform,
+  TouchableOpacity,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -23,12 +22,13 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
-import { useTheme } from "../../../contexts/ThemeContext"; // ✅ Dark mode
+import { useTheme } from "../../../contexts/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function AddRecordScreen() {
   const router = useRouter();
   const { petId: fromPet } = useLocalSearchParams<{ petId?: string }>();
-  const { theme } = useTheme(); // ✅
+  const { colors } = useTheme();
 
   const [petId, setPetId] = useState(fromPet || "");
   const [title, setTitle] = useState("");
@@ -48,9 +48,7 @@ export default function AddRecordScreen() {
       const q = query(collection(db, "pets"), where("userId", "==", user.uid));
       const snapshot = await getDocs(q);
       const list: { id: string; name: string }[] = [];
-      snapshot.forEach((doc) =>
-        list.push({ id: doc.id, name: doc.data().name })
-      );
+      snapshot.forEach((doc) => list.push({ id: doc.id, name: doc.data().name }));
       setPets(list);
     };
     fetchPets();
@@ -65,7 +63,7 @@ export default function AddRecordScreen() {
       if (!result.canceled) {
         setFile(result.assets[0]);
       }
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Could not pick file");
     }
   };
@@ -79,20 +77,14 @@ export default function AddRecordScreen() {
     } as any);
     data.append("upload_preset", UPLOAD_PRESET);
 
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
-      {
-        method: "POST",
-        body: data,
-      }
-    );
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+      method: "POST",
+      body: data,
+    });
 
     const json = await res.json();
-    if (json.secure_url) {
-      return json.secure_url;
-    } else {
-      throw new Error("Cloudinary upload failed");
-    }
+    if (json.secure_url) return json.secure_url;
+    throw new Error("Cloudinary upload failed");
   };
 
   const handleAddRecord = async () => {
@@ -130,136 +122,145 @@ export default function AddRecordScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        theme === "dark" && { backgroundColor: "#121212" },
-      ]}
-    >
-      <Text style={[styles.title, theme === "dark" && { color: "#fff" }]}>
-        Add Medical Record
-      </Text>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>➕ Add Medical Record</Text>
 
-      {/* Title */}
-      <TextInput
-        style={[
-          styles.input,
-          theme === "dark" && {
-            backgroundColor: "#1e1e1e",
-            color: "#fff",
-            borderColor: "#333",
-          },
-        ]}
-        placeholder="Enter record title"
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-        value={title}
-        onChangeText={setTitle}
-      />
+      {/* Card wrapper */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        {/* Title */}
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+          placeholder="Enter record title"
+          placeholderTextColor={colors.icon}
+          value={title}
+          onChangeText={setTitle}
+        />
 
-      {/* Date Picker */}
-      <View style={styles.inputBox}>
-        <Text
-          style={[styles.label, theme === "dark" && { color: "#fff" }]}
-        >
-          Date:
-        </Text>
-        <Button
-          title={date.toLocaleDateString()}
-          color={theme === "dark" ? "#0A84FF" : undefined}
+        {/* Date Picker */}
+        <TouchableOpacity
+          style={[styles.dateBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
           onPress={() => setShowDatePicker(true)}
-        />
-      </View>
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setDate(selectedDate);
-          }}
-        />
-      )}
-
-      {/* File Upload */}
-      <Button
-        title="Pick File (Image/PDF)"
-        color={theme === "dark" ? "#0A84FF" : undefined}
-        onPress={pickFile}
-      />
-      {file ? (
-        <Text
-          style={[
-            styles.fileName,
-            theme === "dark" && { color: "#aaa" },
-          ]}
         >
-          📎 {file.name}
-        </Text>
-      ) : null}
+          <Ionicons name="calendar-outline" size={18} color={colors.icon} />
+          <Text style={{ color: colors.text, marginLeft: 8 }}>{date.toLocaleDateString()}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(false);
+              if (selectedDate) setDate(selectedDate);
+            }}
+          />
+        )}
 
-      {/* Pet selector */}
-      {!petId && (
-        <>
-          <Text
-            style={[styles.label, theme === "dark" && { color: "#fff" }]}
-          >
-            Select Pet:
+        {/* File Upload */}
+        <TouchableOpacity
+          style={[styles.uploadBtn, { backgroundColor: colors.primary }]}
+          onPress={pickFile}
+        >
+          <Ionicons name="attach-outline" size={18} color="#fff" />
+          <Text style={{ color: "#fff", fontWeight: "bold", marginLeft: 6 }}>
+            Pick File (Image/PDF)
           </Text>
-          {pets.map((pet) => (
-            <Button
-              key={pet.id}
-              title={pet.name}
-              onPress={() => setPetId(pet.id)}
-              color={
-                petId === pet.id
-                  ? theme === "dark"
-                    ? "#34C759"
-                    : "green"
-                  : theme === "dark"
-                  ? "#555"
-                  : "gray"
-              }
-            />
-          ))}
-        </>
-      )}
+        </TouchableOpacity>
+        {file && (
+          <Text style={[styles.fileName, { color: colors.icon }]}>📎 {file.name}</Text>
+        )}
 
-      <View style={{ marginTop: 20 }}>
-        <Button
-          title="Save Record"
-          color={theme === "dark" ? "#0A84FF" : undefined}
-          onPress={handleAddRecord}
-        />
-        <View style={{ marginTop: 10 }} />
-        <Button
-          title="Cancel"
-          color={theme === "dark" ? "#555" : undefined}
-          onPress={() => router.back()}
-        />
+        {/* Pet Selector */}
+        {!fromPet && (
+          <View style={{ marginTop: 20 }}>
+            <Text style={[styles.label, { color: colors.text }]}>Select Pet:</Text>
+            <View style={styles.petRow}>
+              {pets.map((pet) => (
+                <TouchableOpacity
+                  key={pet.id}
+                  style={[
+                    styles.petOption,
+                    {
+                      backgroundColor: petId === pet.id ? colors.primary : colors.background,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  onPress={() => setPetId(pet.id)}
+                >
+                  <Text style={{ color: petId === pet.id ? "#fff" : colors.text, fontWeight: "600" }}>
+                    {pet.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
       </View>
+
+      {/* Actions */}
+      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.primary }]} onPress={handleAddRecord}>
+        <Text style={styles.btnText}>💾 Save Record</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.border }]} onPress={() => router.back()}>
+        <Text style={[styles.btnText, { color: colors.text }]}>Cancel</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, backgroundColor: "#fff" },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
+  container: { flexGrow: 1, padding: 20 },
+  title: { fontSize: 24, fontWeight: "bold", textAlign: "center", marginBottom: 16 },
+  card: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 20,
     marginBottom: 20,
-    textAlign: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  inputBox: { marginBottom: 15 },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  dateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+  },
+  uploadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     borderRadius: 8,
-    marginBottom: 15,
-    backgroundColor: "#fff",
-    color: "#000",
+    justifyContent: "center",
+    marginBottom: 10,
   },
-  label: { fontWeight: "600", marginBottom: 6, color: "#000" },
-  fileName: { marginTop: 10, fontStyle: "italic", color: "gray" },
+  fileName: { marginTop: 6, fontStyle: "italic" },
+  label: { fontSize: 16, marginBottom: 6, fontWeight: "600" },
+  petRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  petOption: {
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  btn: {
+    width: "100%",
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+    elevation: 3,
+  },
+  btnText: { fontWeight: "bold", fontSize: 16, color: "#fff" },
 });

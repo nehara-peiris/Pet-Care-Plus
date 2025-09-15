@@ -7,14 +7,13 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Button,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
 import PetCard from "../../../components/PetCard";
-import { useTheme } from "../../../contexts/ThemeContext"; // ✅ add theme
+import { useTheme } from "../../../contexts/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 type Pet = {
   id: string;
@@ -27,7 +26,7 @@ type Pet = {
 
 export default function PetsIndexScreen() {
   const router = useRouter();
-  const { theme } = useTheme(); // ✅ use theme
+  const { colors } = useTheme();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,39 +52,38 @@ export default function PetsIndexScreen() {
   const handleDelete = async (id: string) => {
     try {
       await deleteDoc(doc(db, "pets", id));
-      Alert.alert("Deleted", "Pet removed successfully!");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      console.error("Error deleting pet:", err.message);
     }
   };
 
   if (loading) {
     return (
-      <View style={[styles.center, theme === "dark" && { backgroundColor: "#121212" }]}>
-        <ActivityIndicator size="large" color={theme === "dark" ? "#fff" : "blue"} />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, theme === "dark" && { backgroundColor: "#121212" }]}>
-      <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>🐾 My Pets</Text>
-
-      <View style={[styles.addBtn, { paddingBottom: 10 }]}>
-        <Button
-          title="Add Pet"
-          color={theme === "dark" ? "#0A84FF" : undefined}
-          onPress={() => router.push("/(tabs)/pets/add")}
-        />
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.heading, { color: colors.text }]}>🐾 My Pets</Text>
 
       <FlatList
         data={pets}
+        numColumns={2} // grid layout
+        columnWrapperStyle={{ justifyContent: "space-between" }}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 80 }}
         renderItem={({ item }) => (
-          <View style={styles.petItem}>
-            {/* Tap card → go to details */}
+          <View
+            style={[
+              styles.petCardWrapper,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
             <TouchableOpacity
+              style={{ flex: 1 }}
               onPress={() =>
                 router.push({
                   pathname: "/(tabs)/pets/[id]",
@@ -100,10 +98,9 @@ export default function PetsIndexScreen() {
               />
             </TouchableOpacity>
 
-            {/* Action buttons */}
-            <View style={styles.actions}>
+            {/* Edit/Delete actions */}
+            <View style={styles.cardActions}>
               <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: "#007AFF" }]}
                 onPress={() =>
                   router.push({
                     pathname: "/(tabs)/pets/edit",
@@ -111,41 +108,67 @@ export default function PetsIndexScreen() {
                   })
                 }
               >
-                <Text style={styles.actionText}>Edit</Text>
+                <Ionicons name="create-outline" size={20} color={colors.primary} />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: "#FF3B30" }]}
-                onPress={() => handleDelete(item.id)}
-              >
-                <Text style={styles.actionText}>Delete</Text>
+              <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                <Ionicons name="trash-outline" size={20} color="red" />
               </TouchableOpacity>
             </View>
           </View>
         )}
         ListEmptyComponent={
-          <Text style={[styles.empty, theme === "dark" && { color: "#aaa" }]}>
+          <Text style={[styles.empty, { color: colors.icon }]}>
             No pets yet. Add one!
           </Text>
         }
       />
+
+      {/* Floating Add Button */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+        onPress={() => router.push("/(tabs)/pets/add")}
+      >
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+  container: { flex: 1, padding: 16 },
   heading: { fontSize: 22, fontWeight: "bold", marginBottom: 12 },
-  empty: { textAlign: "center", marginTop: 20, color: "gray" },
-  addBtn: { marginTop: 20 },
+  empty: { textAlign: "center", marginTop: 20 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  petItem: { marginBottom: 20 },
-  actions: { flexDirection: "row", justifyContent: "center", marginTop: 8 },
-  actionBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    marginHorizontal: 5,
+  petCardWrapper: {
+    flex: 1,
+    marginBottom: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  actionText: { color: "#fff", fontWeight: "bold" },
+  cardActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+
+  fab: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
 });

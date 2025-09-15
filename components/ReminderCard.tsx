@@ -18,52 +18,33 @@ export default function ReminderCard({
   isLast,
   onPress,
 }: ReminderCardProps) {
-  const { theme } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View style={styles.timelineItem}>
       {/* Dot + Line */}
       <View style={styles.timelineMarker}>
-        <View
-          style={[
-            styles.dot,
-            theme === "dark" && { backgroundColor: "#4A90E2" },
-          ]}
-        />
-        {!isLast && (
-          <View
-            style={[
-              styles.line,
-              theme === "dark" && { backgroundColor: "#444" },
-            ]}
-          />
-        )}
+        <View style={[styles.dot, { backgroundColor: colors.primary }]} />
+        {!isLast && <View style={[styles.line, { backgroundColor: colors.border }]} />}
       </View>
 
       {/* Content */}
       <TouchableOpacity
         style={[
           styles.timelineContent,
-          theme === "dark" && {
-            backgroundColor: "#1e1e1e",
-            borderColor: "#333",
-          },
+          { backgroundColor: colors.card, borderColor: colors.border },
         ]}
         onPress={onPress}
       >
-        <Text
-          style={[styles.title, theme === "dark" && { color: "#fff" }]}
-        >
-          {title}
-        </Text>
+        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
 
         {date && (
-          <Text style={theme === "dark" ? { color: "#ddd" } : undefined}>
+          <Text style={{ color: colors.text }}>
             📅 {date} {time ? `⏰ ${time}` : ""}
           </Text>
         )}
         {type && (
-          <Text style={theme === "dark" ? { color: "#aaa" } : { color: "gray" }}>
+          <Text style={{ color: colors.icon }}>
             Type: {type}
           </Text>
         )}
@@ -75,15 +56,13 @@ export default function ReminderCard({
 const styles = StyleSheet.create({
   timelineItem: { flexDirection: "row", marginBottom: 20 },
   timelineMarker: { alignItems: "center", marginRight: 10 },
-  dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#007AFF" },
-  line: { width: 2, flex: 1, backgroundColor: "#ccc", marginTop: 2 },
+  dot: { width: 12, height: 12, borderRadius: 6 },
+  line: { width: 2, flex: 1, marginTop: 2 },
   timelineContent: {
     flex: 1,
     padding: 12,
-    backgroundColor: "#f9f9f9",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
   },
   title: { fontWeight: "bold", fontSize: 16, marginBottom: 4 },
 });

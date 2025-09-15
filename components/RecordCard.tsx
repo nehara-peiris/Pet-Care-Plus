@@ -10,55 +10,35 @@ type RecordCardProps = {
 
 export default function RecordCard({ title, date, fileUrl, onPress }: RecordCardProps) {
   const isPdf = fileUrl?.endsWith(".pdf");
-  const { theme } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <TouchableOpacity
       style={[
         styles.card,
-        theme === "dark" && { backgroundColor: "#1e1e1e", borderColor: "#333" },
+        { backgroundColor: colors.card, borderColor: colors.border },
       ]}
       onPress={onPress}
     >
       {fileUrl ? (
         isPdf ? (
-          <View
-            style={[
-              styles.pdfBox,
-              theme === "dark" && { backgroundColor: "#2a2a40" },
-            ]}
-          >
-            <Text style={theme === "dark" ? { color: "#fff" } : undefined}>📄</Text>
+          <View style={[styles.pdfBox, { backgroundColor: colors.secondary }]}>
+            <Text style={{ color: colors.text }}>📄</Text>
           </View>
         ) : (
           <Image source={{ uri: fileUrl }} style={styles.thumbnail} />
         )
       ) : (
-        <View
-          style={[
-            styles.noFileBox,
-            theme === "dark" && { backgroundColor: "#333" },
-          ]}
-        >
-          <Text style={theme === "dark" ? { color: "#fff" } : undefined}>❌</Text>
+        <View style={[styles.noFileBox, { backgroundColor: colors.border }]}>
+          <Text style={{ color: colors.text }}>❌</Text>
         </View>
       )}
 
-      <Text
-        style={[styles.title, theme === "dark" && { color: "#fff" }]}
-        numberOfLines={1}
-      >
+      <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
         {title}
       </Text>
       {date && (
-        <Text
-          style={[
-            styles.date,
-            theme === "dark" && { color: "#aaa" },
-          ]}
-        >
-          {date}
-        </Text>
+        <Text style={[styles.date, { color: colors.icon }]}>{date}</Text>
       )}
     </TouchableOpacity>
   );
@@ -69,9 +49,7 @@ const styles = StyleSheet.create({
     width: 140,
     marginRight: 12,
     padding: 10,
-    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 10,
     alignItems: "center",
   },
@@ -86,7 +64,6 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 6,
     marginBottom: 8,
-    backgroundColor: "#e6f0ff",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -95,10 +72,9 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 6,
     marginBottom: 8,
-    backgroundColor: "#f0f0f0",
     justifyContent: "center",
     alignItems: "center",
   },
   title: { fontSize: 14, fontWeight: "bold", textAlign: "center", marginBottom: 4 },
-  date: { fontSize: 12, color: "gray", textAlign: "center" },
+  date: { fontSize: 12, textAlign: "center" },
 });

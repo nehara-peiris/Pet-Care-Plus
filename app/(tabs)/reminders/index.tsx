@@ -1,24 +1,23 @@
-// app/(tabs)/reminders/index.tsx
 import { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Button,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
-import { useTheme } from "../../../contexts/ThemeContext"; // ✅ Dark mode hook
+import { useTheme } from "../../../contexts/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 type Reminder = {
   id: string;
   title: string;
   petId: string;
-  date?: any;      
+  date?: any;
   time?: string;
   type?: string;
   createdAt?: any;
@@ -26,7 +25,7 @@ type Reminder = {
 
 export default function RemindersScreen() {
   const router = useRouter();
-  const { theme } = useTheme();
+  const { colors } = useTheme();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,13 +48,13 @@ export default function RemindersScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.center, theme === "dark" && { backgroundColor: "#121212" }]}>
-        <ActivityIndicator size="large" color={theme === "dark" ? "#fff" : "blue"} />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
-  // ✅ Safe timestamp formatting
+  // Format Firestore Timestamps safely
   const formatDate = (ts: any, withTime = false) => {
     if (!ts) return "N/A";
     try {
@@ -74,95 +73,101 @@ export default function RemindersScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        theme === "dark" && { backgroundColor: "#121212" },
-      ]}
-    >
-      <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-        📋 All Reminders
-      </Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.heading, { color: colors.text }]}>📋 All Reminders</Text>
 
-      <Button
-        title="➕ Add Reminder"
-        color={theme === "dark" ? "#0A84FF" : undefined}
-        onPress={() => router.push("/(tabs)/reminders/add")}
-      />
-
-      {reminders.length === 0 ? (
-        <Text style={[styles.empty, theme === "dark" && { color: "#aaa" }]}>
-          No reminders yet. Add one!
-        </Text>
-      ) : (
-        reminders.map((reminder) => (
+      <FlatList
+        data={reminders}
+        numColumns={2}
+        columnWrapperStyle={{ justifyContent: "space-between" }}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 80 }}
+        renderItem={({ item }) => (
           <TouchableOpacity
-            key={reminder.id}
             style={[
               styles.reminderCard,
-              theme === "dark" && {
-                backgroundColor: "#1e1e1e",
-                borderColor: "#333",
-              },
+              { backgroundColor: colors.card, borderColor: colors.border },
             ]}
             onPress={() =>
               router.push({
                 pathname: "/(tabs)/reminders/[id]",
-                params: { id: reminder.id },
+                params: { id: item.id },
               })
             }
           >
-            <Text
-              style={[styles.reminderTitle, theme === "dark" && { color: "#fff" }]}
-            >
-              {reminder.title}
+            <Text style={[styles.reminderTitle, { color: colors.text }]}>
+              {item.title}
             </Text>
 
-            {reminder.date ? (
-              <Text style={theme === "dark" && { color: "#bbb" }}>
-                📅 {formatDate(reminder.date)}
+            {item.date && (
+              <Text style={{ color: colors.icon, fontSize: 13 }}>
+                📅 {formatDate(item.date)}
               </Text>
-            ) : null}
-
-            {reminder.time ? (
-              <Text style={theme === "dark" && { color: "#bbb" }}>
-                ⏰ {reminder.time}
+            )}
+            {item.time && (
+              <Text style={{ color: colors.icon, fontSize: 13 }}>⏰ {item.time}</Text>
+            )}
+            {item.type && (
+              <Text style={{ color: colors.icon, fontSize: 13 }}>
+                🏷️ Type: {item.type}
               </Text>
-            ) : null}
-
-            <Text style={theme === "dark" && { color: "#bbb" }}>
-              Type: {reminder.type}
-            </Text>
-
-            {reminder.createdAt ? (
-              <Text style={theme === "dark" && { color: "#777" }}>
-                Created: {formatDate(reminder.createdAt, true)}
+            )}
+            {item.createdAt && (
+              <Text style={{ color: colors.secondary, fontSize: 11, marginTop: 4 }}>
+                🕒 Created {formatDate(item.createdAt, true)}
               </Text>
-            ) : null}
+            )}
           </TouchableOpacity>
-        ))
-      )}
-    </ScrollView>
+        )}
+        ListEmptyComponent={
+          <Text style={[styles.empty, { color: colors.icon }]}>
+            No reminders yet. Add one!
+          </Text>
+        }
+      />
+
+      {/* Floating Add Button */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+        onPress={() => router.push("/(tabs)/reminders/add")}
+      >
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 16, backgroundColor: "#fff" },
-  heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  empty: { textAlign: "center", marginTop: 20, color: "gray" },
-  reminderCard: {
-    padding: 14,
-    marginVertical: 8,
-    backgroundColor: "#f9f9f9",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-  },
-  reminderTitle: { fontWeight: "bold", marginBottom: 4, fontSize: 16 },
+  container: { flex: 1, padding: 16 },
+  heading: { fontSize: 22, fontWeight: "bold", marginBottom: 12, textAlign: "center" },
+  empty: { textAlign: "center", marginTop: 20, fontSize: 16 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
+  reminderCard: {
+    flex: 1,
+    marginBottom: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  reminderTitle: { fontWeight: "600", marginBottom: 6, fontSize: 16 },
+
+  fab: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
 });

@@ -8,26 +8,19 @@ type PetCardProps = {
 };
 
 export default function PetCard({ name, type, imageUrl }: PetCardProps) {
-
-  const { theme } = useTheme();
+  const { colors } = useTheme();
 
   return (
-    <View style={[
-        styles.card,
-        theme === "dark" && { backgroundColor: "#1e1e1e", borderColor: "#333" }
-      ]}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       {imageUrl ? (
         <Image source={{ uri: imageUrl }} style={styles.image} />
       ) : (
-        <View style={[styles.placeholder, theme === "dark" && { backgroundColor: "#333" }]}>
-          <Text style={[
-            styles.placeholderText,
-            theme === "dark" && { color: "#aaa" }
-          ]}>🐾</Text>
+        <View style={[styles.placeholder, { backgroundColor: colors.border }]}>
+          <Text style={[styles.placeholderText, { color: colors.text }]}>🐾</Text>
         </View>
       )}
-      <Text style={[styles.name, theme === "dark" && { color: "#fff" }]}>{name}</Text>
-      <Text style={[styles.type, theme === "dark" && { color: "#bbb" }]}>{type}</Text>
+      <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
+      <Text style={[styles.type, { color: colors.icon }]}>{type}</Text>
     </View>
   );
 }
@@ -36,7 +29,6 @@ const styles = StyleSheet.create({
   card: {
     width: 120,
     height: 160,
-    backgroundColor: "#fff",
     borderRadius: 12,
     marginRight: 12,
     alignItems: "center",
@@ -59,11 +51,10 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     marginBottom: 10,
-    backgroundColor: "#f0f0f0",
     justifyContent: "center",
     alignItems: "center",
   },
   placeholderText: { fontSize: 28 },
   name: { fontSize: 16, fontWeight: "bold", textAlign: "center" },
-  type: { fontSize: 14, color: "gray", textAlign: "center", marginTop: 2 },
+  type: { fontSize: 14, textAlign: "center", marginTop: 2 },
 });

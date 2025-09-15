@@ -1,15 +1,24 @@
-// app/(tabs)/reminders/[id].tsx
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Button, ActivityIndicator, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { doc, getDoc, deleteDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function ReminderDetailsScreen() {
   const router = useRouter();
-  const { theme } = useTheme();
+  const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
+
   const [reminder, setReminder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,9 +28,7 @@ export default function ReminderDetailsScreen() {
       try {
         const ref = doc(db, "reminders", id);
         const snap = await getDoc(ref);
-        if (snap.exists()) {
-          setReminder({ id: snap.id, ...snap.data() });
-        }
+        if (snap.exists()) setReminder({ id: snap.id, ...snap.data() });
       } catch (err) {
         console.error("Error loading reminder:", err);
       } finally {
@@ -33,20 +40,28 @@ export default function ReminderDetailsScreen() {
 
   const handleDelete = async () => {
     if (!id) return;
-    try {
-      await deleteDoc(doc(db, "reminders", id));
-      Alert.alert("Deleted!", "Reminder removed.");
-      router.replace("/(tabs)/reminders");
-    } catch (err: any) {
-      Alert.alert("Error", err.message);
-    }
+    Alert.alert("Delete Reminder", "Are you sure you want to delete this reminder?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteDoc(doc(db, "reminders", id));
+            router.replace("/(tabs)/reminders");
+          } catch (err: any) {
+            Alert.alert("Error", err.message);
+          }
+        },
+      },
+    ]);
   };
 
   const formatDate = (val: any) => {
     if (!val) return "N/A";
     try {
       if (val instanceof Timestamp) return val.toDate().toLocaleString();
-      if (val.toDate) return val.toDate().toLocaleString(); // Firestore object
+      if (val.toDate) return val.toDate().toLocaleString();
       if (val instanceof Date) return val.toLocaleString();
       return String(val);
     } catch {
@@ -56,62 +71,66 @@ export default function ReminderDetailsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme === "dark" ? "#0A84FF" : "blue"} />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   if (!reminder) {
     return (
-      <View style={[styles.center, theme === "dark" && { backgroundColor: "#121212" }]}>
-        <Text style={[{ color: theme === "dark" ? "#fff" : "#000" }]}>
-          Reminder not found.
-        </Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.text, { color: colors.text }]}>Reminder not found</Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, theme === "dark" && { backgroundColor: "#121212" }]}>
-      <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-        {reminder.title}
-      </Text>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>{reminder.title}</Text>
 
-      {reminder.date && (
-        <Text style={[styles.detail, theme === "dark" && { color: "#bbb" }]}>
-          📅 Date: {formatDate(reminder.date)}
-        </Text>
-      )}
-      {reminder.time && (
-        <Text style={[styles.detail, theme === "dark" && { color: "#bbb" }]}>
-          ⏰ Time: {reminder.time}
-        </Text>
-      )}
-      <Text style={[styles.detail, theme === "dark" && { color: "#bbb" }]}>
-        📌 Type: {reminder.type}
-      </Text>
-
-      <View style={{ marginTop: 20 }}>
-        <Button
-          title="Edit Reminder"
-          color={theme === "dark" ? "#0A84FF" : undefined}
-          onPress={() => router.push(`/(tabs)/reminders/edit?id=${reminder.id}`)}
-        />
-        <View style={{ marginTop: 10 }} />
-        <Button
-          title="Delete Reminder"
-          color="red"
-          onPress={handleDelete}
-        />
+        {reminder.date && <Text style={[styles.detail, { color: colors.icon }]}>📅 {formatDate(reminder.date)}</Text>}
+        {reminder.time && <Text style={[styles.detail, { color: colors.icon }]}>⏰ {reminder.time}</Text>}
+        <Text style={[styles.detail, { color: colors.icon }]}>📌 Type: {reminder.type || "N/A"}</Text>
       </View>
-    </View>
+
+      {/* Actions */}
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: colors.primary }]}
+          onPress={() => router.push(`/(tabs)/reminders/edit?id=${reminder.id}`)}
+        >
+          <Ionicons name="create-outline" size={18} color="#fff" />
+          <Text style={styles.btnText}>Edit</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.btn, { backgroundColor: "red" }]} onPress={handleDelete}>
+          <Ionicons name="trash-outline" size={18} color="#fff" />
+          <Text style={styles.btnText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  heading: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
-  detail: { fontSize: 16, marginBottom: 8, color: "#333" },
+  container: { flexGrow: 1, padding: 20 },
+  card: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
+  detail: { fontSize: 15, marginBottom: 6 },
+  text: { fontSize: 16 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  actions: { flexDirection: "row", justifyContent: "space-around", marginTop: 20 },
+  btn: { flexDirection: "row", alignItems: "center", padding: 12, borderRadius: 8, gap: 6 },
+  btnText: { color: "#fff", fontWeight: "bold", fontSize: 15 },
 });

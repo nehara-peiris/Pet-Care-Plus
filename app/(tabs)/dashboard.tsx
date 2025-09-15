@@ -3,12 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  Button,
   ActivityIndicator,
   ScrollView,
   TouchableOpacity,
   Image,
-  Dimensions,
+  Button,
 } from "react-native";
 import { useRouter } from "expo-router";
 import PetCard from "../../components/PetCard";
@@ -17,7 +16,6 @@ import RecordCard from "../../components/RecordCard";
 import { collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { useTheme } from "@/contexts/ThemeContext";
-import { LineChart, PieChart } from "react-native-chart-kit";
 
 type Pet = {
   id: string;
@@ -51,9 +49,9 @@ export default function DashboardScreen() {
   const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
-  const { theme } = useTheme();
-  
-  // 🔧 Helper to safely format Firestore Timestamp or string
+
+  const { theme, colors, toggleTheme } = useTheme();
+
   const formatDate = (ts?: Timestamp | string) => {
     if (!ts) return "";
     try {
@@ -72,17 +70,14 @@ export default function DashboardScreen() {
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
-      // Prefer displayName if available, otherwise fallback to email
       setUserName(user.displayName || user.email?.split("@")[0] || "User");
     }
   }, []);
 
-  // Fetch data
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
 
-    // Pets
     const petsRef = collection(db, "pets");
     const petsQuery = query(petsRef, where("userId", "==", user.uid));
     const unsubscribePets = onSnapshot(petsQuery, (snapshot) => {
@@ -92,7 +87,6 @@ export default function DashboardScreen() {
       setLoading(false);
     });
 
-    // Reminders
     const remindersRef = collection(db, "reminders");
     const remindersQuery = query(remindersRef, where("userId", "==", user.uid));
     const unsubscribeReminders = onSnapshot(remindersQuery, (snapshot) => {
@@ -103,7 +97,6 @@ export default function DashboardScreen() {
       setReminders(list);
     });
 
-    // Records
     const recordsRef = collection(db, "records");
     const recordsQuery = query(recordsRef, where("userId", "==", user.uid));
     const unsubscribeRecords = onSnapshot(recordsQuery, (snapshot) => {
@@ -119,82 +112,74 @@ export default function DashboardScreen() {
     };
   }, []);
 
-  const petTypeCounts = pets.reduce((acc: any, pet) => {
-    acc[pet.type] = (acc[pet.type] || 0) + 1;
-    return acc;
-  }, {});
-
-  const pieData = Object.keys(petTypeCounts).map((type, idx) => ({
-    name: type,
-    population: petTypeCounts[type],
-    color: ["#21706f", "#f4976c", "#6096ba", "#274c77"][idx % 4],
-    legendFontColor: "#333",
-    legendFontSize: 12,
-  }));
-
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#21706f" />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <ScrollView
-    contentContainerStyle={[
+      contentContainerStyle={[
         styles.container,
-        theme === "dark" && { backgroundColor: "#121212" }
+        { backgroundColor: colors.background },
       ]}
-      >
-      
-       {/* 🔹 Dashboard Header */}
-      <View style={styles.header}>
+    >
+      {/* 🔹 Header */}
+      <View style={[styles.header, { borderColor: colors.border }]}>
         <View style={styles.headerLeft}>
           {auth.currentUser?.photoURL ? (
             <Image source={{ uri: auth.currentUser.photoURL }} style={styles.profilePic} />
           ) : (
-            <View style={styles.profilePlaceholder}>
+            <View style={[styles.profilePlaceholder, { backgroundColor: colors.primary }]}>
               <Text style={styles.profileInitial}>
                 {userName ? userName.charAt(0).toUpperCase() : "U"}
               </Text>
             </View>
           )}
           <View>
-            <Text style={styles.headerTitle}>PetCarePlus</Text>
-            <Text style={styles.greeting}>Hi, {userName} 👋</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>PetCarePlus</Text>
+            <Text style={[styles.greeting, { color: colors.text }]}>
+              Hi, {userName} 👋
+            </Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/settings")}>
-          <Text style={styles.headerIcon}>⚙️</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={toggleTheme} style={styles.headerBtn}>
+            <Text style={styles.headerIcon}>
+              {theme === "light" ? "🌙" : "☀️"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/settings")}>
+            <Text style={styles.headerIcon}>⚙️</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* 🔹 Quick Stats */}
       <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{pets.length}</Text>
-          <Text style={styles.statLabel}>Pets</Text>
+        <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.statValue, { color: colors.primary }]}>{pets.length}</Text>
+          <Text style={[styles.statLabel, { color: colors.text }]}>Pets</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{reminders.length}</Text>
-          <Text style={styles.statLabel}>Reminders</Text>
+        <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.statValue, { color: colors.primary }]}>{reminders.length}</Text>
+          <Text style={[styles.statLabel, { color: colors.text }]}>Reminders</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{records.length}</Text>
-          <Text style={styles.statLabel}>Records</Text>
+        <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.statValue, { color: colors.primary }]}>{records.length}</Text>
+          <Text style={[styles.statLabel, { color: colors.text }]}>Records</Text>
         </View>
       </View>
 
-       {/* Pets Section */}
+      {/* 🔹 Pets Section */}
       <TouchableOpacity onPress={() => router.push("/(tabs)/pets")}>
-        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-          🐾 My Pets
-        </Text>
+        <Text style={[styles.heading, { color: colors.text }]}>🐾 My Pets</Text>
       </TouchableOpacity>
-
       {pets.length === 0 ? (
-        <Text style={styles.empty}>No pets yet. Add one!</Text>
+        <Text style={[styles.empty, { color: colors.text }]}>No pets yet. Add one!</Text>
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {pets.map((pet) => (
@@ -208,17 +193,15 @@ export default function DashboardScreen() {
         </ScrollView>
       )}
       <View style={styles.addBtn}>
-        <Button title="Add Pet" onPress={() => router.push("/(tabs)/pets/add")} />
+        <Button title="Add Pet" color={colors.primary} onPress={() => router.push("/(tabs)/pets/add")} />
       </View>
 
-      {/* Reminders Section */}
+      {/* 🔹 Reminders Section */}
       <TouchableOpacity onPress={() => router.push("/(tabs)/reminders")}>
-        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-          ⏰ Upcoming Reminders
-        </Text>
+        <Text style={[styles.heading, { color: colors.text }]}>⏰ Upcoming Reminders</Text>
       </TouchableOpacity>
       {reminders.length === 0 ? (
-        <Text style={styles.empty}>No reminders yet. Add one!</Text>
+        <Text style={[styles.empty, { color: colors.text }]}>No reminders yet. Add one!</Text>
       ) : (
         <View style={styles.timeline}>
           {reminders.slice(0, 5).map((reminder, index, arr) => (
@@ -242,19 +225,17 @@ export default function DashboardScreen() {
       <View style={styles.addBtn}>
         <Button
           title="Add Reminder"
+          color={colors.primary}
           onPress={() => router.push("/(tabs)/reminders/add")}
         />
       </View>
 
-
-      {/* Records Section */}
+      {/* 🔹 Records Section */}
       <TouchableOpacity onPress={() => router.push("/(tabs)/records")}>
-        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-          📑 Medical Record
-        </Text>
+        <Text style={[styles.heading, { color: colors.text }]}>📑 Medical Records</Text>
       </TouchableOpacity>
       {records.length === 0 ? (
-        <Text style={styles.empty}>No records yet. Add one!</Text>
+        <Text style={[styles.empty, { color: colors.text }]}>No records yet. Add one!</Text>
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
           {records.slice(0, 5).map((record) => (
@@ -265,7 +246,7 @@ export default function DashboardScreen() {
               fileUrl={record.fileUrl}
               onPress={() =>
                 router.push({
-                  pathname: "/(tabs)/records/view",
+                  pathname: "/(tabs)/records/[id]",
                   params: { id: record.id },
                 })
               }
@@ -274,52 +255,23 @@ export default function DashboardScreen() {
         </ScrollView>
       )}
       <View style={styles.addBtn}>
-        <Button title="Add Record" onPress={() => router.push("/(tabs)/records/add")} />
+        <Button title="Add Record" color={colors.primary} onPress={() => router.push("/(tabs)/records/add")} />
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 16, backgroundColor: "#fff" },
+  container: { flexGrow: 1, padding: 16 },
 
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  profilePic: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
+  headerLeft: { flexDirection: "row", alignItems: "center" },
+  profilePic: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
   profilePlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-    backgroundColor: "#007AFF",
-    justifyContent: "center",
-    alignItems: "center",
+    width: 40, height: 40, borderRadius: 20, marginRight: 10,
+    justifyContent: "center", alignItems: "center",
   },
-  profileInitial: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  logoutBtn: {
-    backgroundColor: "#ff3b30",
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginLeft: 12,
-  },
-  logoutText: {
-    color: "#fff",
-    fontSize: 16,
-  },
+  profileInitial: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 
-  // 🔹 Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -328,120 +280,24 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 5,
     borderBottomWidth: 1,
-    borderColor: "#eee",
   },
-  headerActions: { flexDirection: "row" },
-  headerBtn: { marginLeft: 15 },
+  headerActions: { flexDirection: "row", alignItems: "center" },
+  headerBtn: { marginLeft: 10 },
   headerIcon: { fontSize: 20 },
 
-  greeting: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#555",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
+  greeting: { fontSize: 16, fontWeight: "600" },
+  headerTitle: { fontSize: 20, fontWeight: "bold" },
 
   heading: { fontSize: 22, fontWeight: "bold", marginVertical: 10 },
-  empty: { textAlign: "center", marginVertical: 10, color: "gray" },
+  empty: { textAlign: "center", marginVertical: 10 },
   addBtn: { marginTop: 10, marginBottom: 20 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  timeline: {
-    marginVertical: 10,
-  },
-  timelineItem: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  timelineMarker: {
-    alignItems: "center",
-    marginRight: 10,
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#007AFF",
-  },
-  line: {
-    width: 2,
-    flex: 1,
-    backgroundColor: "#ccc",
-    marginTop: 2,
-  },
-  timelineContent: {
-    flex: 1,
-    padding: 12,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  reminderTitle: {
-    fontWeight: "bold",
-    fontSize: 16,
-    marginBottom: 4,
-  },
+  timeline: { marginVertical: 10 },
 
-  recordScroll: {
-    marginVertical: 10,
-  },
-  recordCard: {
-    width: 140,
-    marginRight: 12,
-    padding: 10,
-    backgroundColor: "#f9f9f9",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  thumbnail: {
-    width: 80,
-    height: 80,
-    borderRadius: 6,
-    marginBottom: 8,
-  },
-  pdfBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 6,
-    marginBottom: 8,
-    backgroundColor: "#e6f0ff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  noFileBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 6,
-    marginBottom: 8,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  recordTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  recordDate: {
-    fontSize: 12,
-    color: "gray",
-    textAlign: "center",
-  },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
+  statsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 },
   statCard: {
     flex: 1,
-    backgroundColor: "#fff",
     marginHorizontal: 5,
     padding: 16,
     borderRadius: 12,
@@ -451,6 +307,6 @@ const styles = StyleSheet.create({
     elevation: 4,
     alignItems: "center",
   },
-  statValue: { fontSize: 22, fontWeight: "bold", color: "#21706f" },
-  statLabel: { fontSize: 14, color: "#555", marginTop: 4 },
+  statValue: { fontSize: 22, fontWeight: "bold" },
+  statLabel: { fontSize: 14, marginTop: 4 },
 });

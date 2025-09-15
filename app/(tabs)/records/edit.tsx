@@ -1,43 +1,46 @@
-// app/(tabs)/records/edit.tsx
 import { useEffect, useState } from "react";
 import {
   View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   Alert,
+  TouchableOpacity,
+  Platform,
+  ScrollView,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function EditRecordScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { theme } = useTheme();
+  const { colors } = useTheme();
 
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState<Date>(new Date());
   const [file, setFile] = useState<any>(null);
   const [currentFileUrl, setCurrentFileUrl] = useState<string>("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Replace with your Cloudinary details
+  // Cloudinary
   const CLOUD_NAME = "dc55dtavq";
   const UPLOAD_PRESET = "petcareplus_unsigned";
 
   useEffect(() => {
     if (!id) return;
-
     const loadRecord = async () => {
       const ref = doc(db, "records", id);
       const snap = await getDoc(ref);
       if (snap.exists()) {
         const r = snap.data();
         setTitle(r.title || "");
-        setDate(r.date?.toDate().toISOString().split("T")[0] || ""); // YYYY-MM-DD
+        if (r.date instanceof Timestamp) setDate(r.date.toDate());
         setCurrentFileUrl(r.fileUrl || "");
       }
     };
@@ -50,16 +53,12 @@ export default function EditRecordScreen() {
         type: ["image/*", "application/pdf"],
         copyToCacheDirectory: true,
       });
-
-      if (!result.canceled) {
-        setFile(result.assets[0]);
-      }
-    } catch (err) {
+      if (!result.canceled) setFile(result.assets[0]);
+    } catch {
       Alert.alert("Error", "Could not pick file");
     }
   };
 
-  // Upload to Cloudinary
   const uploadToCloudinary = async (file: any) => {
     const data = new FormData();
     data.append("file", {
@@ -71,33 +70,24 @@ export default function EditRecordScreen() {
 
     const res = await fetch(
       `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
-      {
-        method: "POST",
-        body: data,
-      }
+      { method: "POST", body: data }
     );
 
     const json = await res.json();
-    if (json.secure_url) {
-      return json.secure_url;
-    } else {
-      throw new Error("Cloudinary upload failed");
-    }
+    if (json.secure_url) return json.secure_url;
+    throw new Error("Cloudinary upload failed");
   };
 
   const handleUpdate = async () => {
     if (!id) return;
-
     try {
       let fileUrl = currentFileUrl;
-      if (file) {
-        fileUrl = await uploadToCloudinary(file);
-      }
+      if (file) fileUrl = await uploadToCloudinary(file);
 
       const ref = doc(db, "records", id);
       await updateDoc(ref, {
         title,
-        date: date ? new Date(date) : null,
+        date: Timestamp.fromDate(date),
         fileUrl,
       });
 
@@ -109,106 +99,110 @@ export default function EditRecordScreen() {
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        theme === "dark" && { backgroundColor: "#121212" },
-      ]}
-    >
-      <Text
-        style={[styles.heading, theme === "dark" && { color: "#fff" }]}
-      >
-        Edit Record
-      </Text>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.heading, { color: colors.text }]}>✏️ Edit Record</Text>
 
-      <TextInput
-        style={[
-          styles.input,
-          theme === "dark" && {
-            backgroundColor: "#1e1e1e",
-            color: "#fff",
-            borderColor: "#333",
-          },
-        ]}
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Record Title"
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-      />
-
-      <TextInput
-        style={[
-          styles.input,
-          theme === "dark" && {
-            backgroundColor: "#1e1e1e",
-            color: "#fff",
-            borderColor: "#333",
-          },
-        ]}
-        value={date}
-        onChangeText={setDate}
-        placeholder="Date (YYYY-MM-DD)"
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-      />
-
-      <Button
-        title="Pick New File"
-        color={theme === "dark" ? "#0A84FF" : undefined}
-        onPress={pickFile}
-      />
-      {file ? (
-        <Text
-          style={[
-            styles.fileName,
-            theme === "dark" && { color: "#aaa" },
-          ]}
-        >
-          📎 {file.name}
-        </Text>
-      ) : currentFileUrl ? (
-        <Text
-          style={[
-            styles.fileName,
-            theme === "dark" && { color: "#aaa" },
-          ]}
-        >
-          📂 Existing file attached
-        </Text>
-      ) : null}
-
-      <View style={{ marginTop: 20 }}>
-        <Button
-          title="Update"
-          color={theme === "dark" ? "#0A84FF" : undefined}
-          onPress={handleUpdate}
+      {/* Card wrapper */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        {/* Title */}
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Record Title"
+          placeholderTextColor={colors.icon}
         />
-        <View style={{ marginTop: 12 }} />
-        <Button
-          title="Cancel"
-          color={theme === "dark" ? "#555" : undefined}
-          onPress={() => router.back()}
-        />
+
+        {/* Date Picker */}
+        <TouchableOpacity
+          style={[styles.dateBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Ionicons name="calendar-outline" size={18} color={colors.icon} />
+          <Text style={{ color: colors.text, marginLeft: 8 }}>{date.toLocaleDateString()}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(false);
+              if (selectedDate) setDate(selectedDate);
+            }}
+          />
+        )}
+
+        {/* File Upload */}
+        <TouchableOpacity
+          style={[styles.uploadBtn, { backgroundColor: colors.primary }]}
+          onPress={pickFile}
+        >
+          <Ionicons name="attach-outline" size={18} color="#fff" />
+          <Text style={{ color: "#fff", fontWeight: "bold", marginLeft: 6 }}>Pick New File</Text>
+        </TouchableOpacity>
+        {file ? (
+          <Text style={[styles.fileName, { color: colors.icon }]}>📎 {file.name}</Text>
+        ) : currentFileUrl ? (
+          <Text style={[styles.fileName, { color: colors.icon }]}>📂 Existing file attached</Text>
+        ) : null}
       </View>
-    </View>
+
+      {/* Actions */}
+      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.primary }]} onPress={handleUpdate}>
+        <Text style={styles.btnText}>💾 Update Record</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.border }]} onPress={() => router.back()}>
+        <Text style={[styles.btnText, { color: colors.text }]}>Cancel</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  heading: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
+  container: { flexGrow: 1, padding: 20 },
+  heading: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+  card: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  dateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+  },
+  uploadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 12,
     borderRadius: 8,
-    marginBottom: 15,
-    backgroundColor: "#fff",
-    color: "#000",
+    marginBottom: 10,
   },
-  fileName: { marginTop: 10, fontStyle: "italic", color: "gray" },
+  fileName: { marginTop: 5, fontStyle: "italic" },
+  btn: {
+    width: "100%",
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+    elevation: 3,
+  },
+  btnText: { fontWeight: "bold", fontSize: 16, color: "#fff" },
 });
