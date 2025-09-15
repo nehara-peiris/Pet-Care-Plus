@@ -23,6 +23,9 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { useTheme } from "../../../contexts/ThemeContext";
 
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../../lib/firebase";
+
 export default function SettingsScreen() {
   const router = useRouter();
   const user = auth.currentUser;
@@ -124,6 +127,15 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotifications(value);
+
+    const user = auth.currentUser;
+    if (user) {
+      await updateDoc(doc(db, "users", user.uid), { notifications: value });
+    }
+  };
+
   return (
     <View style={[ styles.container,  theme === "dark" && { backgroundColor: "#121212" }, ]}>
       {/* Profile */}
@@ -146,7 +158,7 @@ export default function SettingsScreen() {
       </View>
       <View style={styles.settingRow}>
         <Text style={[styles.settingText, theme === "dark" && { color: "#fff" }]}>🔔 Notifications</Text>
-        <Switch value={notifications} onValueChange={setNotifications} />
+        <Switch value={notifications} onValueChange={handleToggleNotifications} />
       </View>
 
       {/* Actions */}

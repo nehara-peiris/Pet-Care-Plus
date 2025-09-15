@@ -1,7 +1,7 @@
+// lib/notifications.ts
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
-// Configure how notifications behave when received
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -12,42 +12,34 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// Request permissions (ask once)
-export async function registerForPushNotificationsAsync() {
-  const { status } = await Notifications.requestPermissionsAsync();
-  if (status !== "granted") {
-    alert("Permission for notifications not granted!");
-    return false;
-  }
-
-  // Android requires a channel for scheduled/local notifications
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FF231F7C",
-    });
-  }
-
-  return true;
-}
-
-// Schedule a local notification
-export async function scheduleReminderNotification(title: string, date: string, time: string) {
-  if (!date || !time) return;
-
+// 🔹 Schedule reminder (supports once/daily/weekly)
+export async function scheduleReminderNotification(
+  title: string,
+  date: string,
+  time: string,
+  repeat: "once" | "daily" | "weekly" = "once"
+) {
   const triggerDate = new Date(`${date}T${time}:00`);
 
+  let trigger: any = triggerDate; // default once
+
+  if (repeat === "daily") {
+    trigger = {
+      hour: triggerDate.getHours(),
+      minute: triggerDate.getMinutes(),
+      repeats: true,
+    };
+  } else if (repeat === "weekly") {
+    trigger = {
+      weekday: triggerDate.getDay() + 1,
+      hour: triggerDate.getHours(),
+      minute: triggerDate.getMinutes(),
+      repeats: true,
+    };
+  }
+
   await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "⏰ Pet Reminder",
-      body: title,
-      sound: true,
-    },
-    trigger: {
-      channelId: "default", // ✅ required on Android
-      date: triggerDate,    // ✅ correct typing for SDK 50
-    },
+    content: { title: "🐾 Reminder", body: title },
+    trigger,
   });
 }

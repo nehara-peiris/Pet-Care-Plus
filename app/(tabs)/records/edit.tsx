@@ -1,3 +1,4 @@
+// app/(tabs)/records/edit.tsx
 import { useEffect, useState } from "react";
 import {
   View,
@@ -11,10 +12,12 @@ import * as DocumentPicker from "expo-document-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 export default function EditRecordScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { theme } = useTheme();
 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -106,34 +109,85 @@ export default function EditRecordScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Edit Record</Text>
+    <View
+      style={[
+        styles.container,
+        theme === "dark" && { backgroundColor: "#121212" },
+      ]}
+    >
+      <Text
+        style={[styles.heading, theme === "dark" && { color: "#fff" }]}
+      >
+        Edit Record
+      </Text>
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          theme === "dark" && {
+            backgroundColor: "#1e1e1e",
+            color: "#fff",
+            borderColor: "#333",
+          },
+        ]}
         value={title}
         onChangeText={setTitle}
         placeholder="Record Title"
+        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
       />
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          theme === "dark" && {
+            backgroundColor: "#1e1e1e",
+            color: "#fff",
+            borderColor: "#333",
+          },
+        ]}
         value={date}
         onChangeText={setDate}
         placeholder="Date (YYYY-MM-DD)"
+        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
       />
 
-      <Button title="Pick New File" onPress={pickFile} />
+      <Button
+        title="Pick New File"
+        color={theme === "dark" ? "#0A84FF" : undefined}
+        onPress={pickFile}
+      />
       {file ? (
-        <Text style={styles.fileName}>📎 {file.name}</Text>
+        <Text
+          style={[
+            styles.fileName,
+            theme === "dark" && { color: "#aaa" },
+          ]}
+        >
+          📎 {file.name}
+        </Text>
       ) : currentFileUrl ? (
-        <Text style={styles.fileName}>📂 Existing file attached</Text>
+        <Text
+          style={[
+            styles.fileName,
+            theme === "dark" && { color: "#aaa" },
+          ]}
+        >
+          📂 Existing file attached
+        </Text>
       ) : null}
 
       <View style={{ marginTop: 20 }}>
-        <Button title="Update" onPress={handleUpdate} />
+        <Button
+          title="Update"
+          color={theme === "dark" ? "#0A84FF" : undefined}
+          onPress={handleUpdate}
+        />
         <View style={{ marginTop: 12 }} />
-        <Button title="Cancel" onPress={() => router.back()} />
+        <Button
+          title="Cancel"
+          color={theme === "dark" ? "#555" : undefined}
+          onPress={() => router.back()}
+        />
       </View>
     </View>
   );
@@ -141,13 +195,20 @@ export default function EditRecordScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  heading: { fontSize: 22, fontWeight: "bold", marginBottom: 16, textAlign: "center" },
+  heading: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 16,
+    textAlign: "center",
+  },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
     padding: 12,
     borderRadius: 8,
     marginBottom: 15,
+    backgroundColor: "#fff",
+    color: "#000",
   },
   fileName: { marginTop: 10, fontStyle: "italic", color: "gray" },
 });

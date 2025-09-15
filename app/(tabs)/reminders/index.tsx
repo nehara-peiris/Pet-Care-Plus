@@ -18,15 +18,15 @@ type Reminder = {
   id: string;
   title: string;
   petId: string;
-  date?: any;       // Firestore Timestamp
+  date?: any;      
   time?: string;
   type?: string;
-  createdAt?: any;  // Firestore Timestamp
+  createdAt?: any;
 };
 
 export default function RemindersScreen() {
   const router = useRouter();
-  const { theme } = useTheme(); // ✅ Dark mode context
+  const { theme } = useTheme();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
 
