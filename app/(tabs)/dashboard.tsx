@@ -1,9 +1,21 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Button, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  ActivityIndicator,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import { useRouter } from "expo-router";
 import PetCard from "../../components/PetCard";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import ReminderCard from "../../components/ReminderCard";
+import RecordCard from "../../components/RecordCard";
+import { collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type Pet = {
   id: string;
@@ -18,22 +30,57 @@ type Reminder = {
   id: string;
   title: string;
   petId: string;
-  date?: string;
+  date?: Timestamp;
   time?: string;
   type?: string;
+};
+
+type Record = {
+  id: string;
+  title: string;
+  date?: Timestamp;
+  fileUrl?: string;
 };
 
 export default function DashboardScreen() {
   const router = useRouter();
   const [pets, setPets] = useState<Pet[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState<string | null>(null);
+  const { theme } = useTheme();
+  
+  // 🔧 Helper to safely format Firestore Timestamp or string
+  const formatDate = (ts?: Timestamp | string) => {
+    if (!ts) return "";
+    try {
+      if (ts instanceof Timestamp) {
+        return ts.toDate().toLocaleDateString();
+      }
+      if (typeof ts === "string") {
+        return new Date(ts).toLocaleDateString();
+      }
+      return String(ts);
+    } catch {
+      return "Invalid date";
+    }
+  };
 
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      // Prefer displayName if available, otherwise fallback to email
+      setUserName(user.displayName || user.email?.split("@")[0] || "User");
+    }
+  }, []);
+
+  // Fetch data
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
 
-    // Fetch pets
+    // Pets
     const petsRef = collection(db, "pets");
     const petsQuery = query(petsRef, where("userId", "==", user.uid));
     const unsubscribePets = onSnapshot(petsQuery, (snapshot) => {
@@ -43,18 +90,30 @@ export default function DashboardScreen() {
       setLoading(false);
     });
 
-    // Fetch reminders
+    // Reminders
     const remindersRef = collection(db, "reminders");
     const remindersQuery = query(remindersRef, where("userId", "==", user.uid));
     const unsubscribeReminders = onSnapshot(remindersQuery, (snapshot) => {
       const list: Reminder[] = [];
-      snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() } as Reminder));
+      snapshot.forEach((doc) =>
+        list.push({ id: doc.id, ...doc.data() } as Reminder)
+      );
       setReminders(list);
+    });
+
+    // Records
+    const recordsRef = collection(db, "records");
+    const recordsQuery = query(recordsRef, where("userId", "==", user.uid));
+    const unsubscribeRecords = onSnapshot(recordsQuery, (snapshot) => {
+      const list: Record[] = [];
+      snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() } as Record));
+      setRecords(list);
     });
 
     return () => {
       unsubscribePets();
       unsubscribeReminders();
+      unsubscribeRecords();
     };
   }, []);
 
@@ -67,71 +126,292 @@ export default function DashboardScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Pets Section */}
-      <Text style={styles.heading}>🐾 My Pets</Text>
+    <ScrollView
+    contentContainerStyle={[
+        styles.container,
+        theme === "dark" && { backgroundColor: "#121212" }
+      ]}
+      >
+      {/* 🔹 Custom Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          {auth.currentUser?.photoURL ? (
+            <Image
+              source={{ uri: auth.currentUser.photoURL }}
+              style={styles.profilePic}
+            />
+          ) : (
+            <View style={styles.profilePlaceholder}>
+              <Text style={styles.profileInitial}>
+                {userName ? userName.charAt(0).toUpperCase() : "U"}
+              </Text>
+            </View>
+          )}
+          <View>
+            <Text style={styles.headerTitle}>PetCarePlus</Text>
+            <Text style={styles.greeting}>Hi, {userName} 👋</Text>
+          </View>
+        </View>
 
-      <FlatList
-        data={pets}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => router.push(`/(tabs)/pets/${item.id}`)}>
-            <PetCard name={item.name} type={item.type} imageUrl={item.imageUrl} />
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/settings")}
+            style={styles.headerBtn}
+          >
+            <Text style={styles.headerIcon}>⚙️</Text>
           </TouchableOpacity>
-        )}
-        ListEmptyComponent={<Text style={styles.empty}>No pets yet. Add one!</Text>}
-      />
+        </View>
+      </View>
 
+
+
+       {/* Pets Section */}
+      <TouchableOpacity onPress={() => router.push("/(tabs)/pets")}>
+        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
+          🐾 My Pets
+        </Text>
+      </TouchableOpacity>
+
+      {pets.length === 0 ? (
+        <Text style={styles.empty}>No pets yet. Add one!</Text>
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {pets.map((pet) => (
+            <TouchableOpacity
+              key={pet.id}
+              onPress={() => router.push(`/(tabs)/pets/${pet.id}`)}
+            >
+              <PetCard name={pet.name} type={pet.type} imageUrl={pet.imageUrl} />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
       <View style={styles.addBtn}>
         <Button title="Add Pet" onPress={() => router.push("/(tabs)/pets/add")} />
       </View>
 
       {/* Reminders Section */}
-      <Text style={styles.heading}>⏰ Upcoming Reminders</Text>
-
+      <TouchableOpacity onPress={() => router.push("/(tabs)/reminders")}>
+        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
+          ⏰ Upcoming Reminders
+        </Text>
+      </TouchableOpacity>
       {reminders.length === 0 ? (
         <Text style={styles.empty}>No reminders yet. Add one!</Text>
       ) : (
-        reminders.slice(0, 5).map((reminder) => (
-          <TouchableOpacity
-            key={reminder.id}
-            onPress={() =>
-              router.push({
-                pathname: "/(tabs)/reminders/[id]",
-                params: { id: reminder.id },
-              })
-            }
-          >
-            <View style={styles.reminderCard}>
-              <Text style={styles.reminderTitle}>{reminder.title}</Text>
-              {reminder.date ? <Text>Date: {reminder.date}</Text> : null}
-              {reminder.time ? <Text>Time: {reminder.time}</Text> : null}
-              <Text>Type: {reminder.type}</Text>
-            </View>
-          </TouchableOpacity>
-        ))
+        <View style={styles.timeline}>
+          {reminders.slice(0, 5).map((reminder, index, arr) => (
+            <ReminderCard
+              key={reminder.id}
+              title={reminder.title}
+              date={formatDate(reminder.date)}
+              time={reminder.time}
+              type={reminder.type}
+              isLast={index === arr.length - 1}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/reminders/[id]",
+                  params: { id: reminder.id },
+                })
+              }
+            />
+          ))}
+        </View>
       )}
-      
       <View style={styles.addBtn}>
-        <Button title="Add Reminder" onPress={() => router.push("/(tabs)/reminders/add")} />
+        <Button
+          title="Add Reminder"
+          onPress={() => router.push("/(tabs)/reminders/add")}
+        />
       </View>
-    </View>
+
+
+      {/* Records Section */}
+      <TouchableOpacity onPress={() => router.push("/(tabs)/records")}>
+        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
+          📑 Medical Record
+        </Text>
+      </TouchableOpacity>
+      {records.length === 0 ? (
+        <Text style={styles.empty}>No records yet. Add one!</Text>
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
+          {records.slice(0, 5).map((record) => (
+            <RecordCard
+              key={record.id}
+              title={record.title}
+              date={formatDate(record.date)}
+              fileUrl={record.fileUrl}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/records/view",
+                  params: { id: record.id },
+                })
+              }
+            />
+          ))}
+        </ScrollView>
+      )}
+      <View style={styles.addBtn}>
+        <Button title="Add Record" onPress={() => router.push("/(tabs)/records/add")} />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+  container: { flexGrow: 1, padding: 16, backgroundColor: "#fff" },
+
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  profilePic: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  profilePlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+    backgroundColor: "#007AFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  profileInitial: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  logoutBtn: {
+    backgroundColor: "#ff3b30",
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginLeft: 12,
+  },
+  logoutText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+
+  // 🔹 Header
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+  headerActions: { flexDirection: "row" },
+  headerBtn: { marginLeft: 15 },
+  headerIcon: { fontSize: 20 },
+
+  greeting: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#555",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+
   heading: { fontSize: 22, fontWeight: "bold", marginVertical: 10 },
   empty: { textAlign: "center", marginVertical: 10, color: "gray" },
   addBtn: { marginTop: 10, marginBottom: 20 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  reminderCard: {
+
+  timeline: {
+    marginVertical: 10,
+  },
+  timelineItem: {
+    flexDirection: "row",
+    marginBottom: 20,
+  },
+  timelineMarker: {
+    alignItems: "center",
+    marginRight: 10,
+  },
+  dot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#007AFF",
+  },
+  line: {
+    width: 2,
+    flex: 1,
+    backgroundColor: "#ccc",
+    marginTop: 2,
+  },
+  timelineContent: {
+    flex: 1,
     padding: 12,
-    marginVertical: 6,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  reminderTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 4,
+  },
+
+  recordScroll: {
+    marginVertical: 10,
+  },
+  recordCard: {
+    width: 140,
+    marginRight: 12,
+    padding: 10,
     backgroundColor: "#f9f9f9",
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 8,
+    borderRadius: 10,
+    alignItems: "center",
   },
-  reminderTitle: { fontWeight: "bold", marginBottom: 4 },
+  thumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  pdfBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 6,
+    marginBottom: 8,
+    backgroundColor: "#e6f0ff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noFileBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 6,
+    marginBottom: 8,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  recordTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  recordDate: {
+    fontSize: 12,
+    color: "gray",
+    textAlign: "center",
+  },
+
 });

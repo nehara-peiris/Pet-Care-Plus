@@ -1,7 +1,7 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router"; 
 import { View, Text, StyleSheet, Button, ActivityIndicator, Alert, Image, ScrollView } from "react-native";
 import { useEffect, useState } from "react";
-import { doc, getDoc, deleteDoc, collection, query, where, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, deleteDoc, collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 
 type Pet = {
@@ -21,10 +21,27 @@ export default function PetDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [reminders, setReminders] = useState<any[]>([]);
 
+  const formatDate = (ts?: Timestamp | string, withTime = false) => {
+    if (!ts) return "N/A";
+    try {
+      if (ts instanceof Timestamp) {
+        return withTime
+          ? ts.toDate().toLocaleString()
+          : ts.toDate().toLocaleDateString();
+      }
+      if (typeof ts === "string") {
+        const d = new Date(ts);
+        return withTime ? d.toLocaleString() : d.toLocaleDateString();
+      }
+      return String(ts);
+    } catch {
+      return "Invalid date";
+    }
+  };
+
   // Fetch pet details
   useEffect(() => {
     if (!id) return;
-
     const fetchPet = async () => {
       try {
         const docRef = doc(db, "pets", id);
@@ -38,14 +55,12 @@ export default function PetDetailsScreen() {
         setLoading(false);
       }
     };
-
     fetchPet();
   }, [id]);
 
   // Fetch reminders linked to this pet
   useEffect(() => {
     if (!id) return;
-
     const remindersRef = collection(db, "reminders");
     const q = query(remindersRef, where("petId", "==", id));
 
@@ -54,13 +69,11 @@ export default function PetDetailsScreen() {
       snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
       setReminders(list);
     });
-
     return unsubscribe;
   }, [id]);
 
   const handleDelete = async () => {
     if (!id) return;
-
     Alert.alert("Delete Pet", "Are you sure you want to delete this pet?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -122,14 +135,15 @@ export default function PetDetailsScreen() {
 
       {/* Reminders Section */}
       <Text style={styles.reminderTitle}>Reminders</Text>
-
       {reminders.length === 0 ? (
         <Text style={styles.noReminders}>No reminders yet.</Text>
       ) : (
         reminders.map((reminder) => (
           <View key={reminder.id} style={styles.reminderCard}>
             <Text style={styles.reminderText}>{reminder.title}</Text>
-            {reminder.date ? <Text>Date: {reminder.date}</Text> : null}
+            {reminder.date ? (
+              <Text>Date: {formatDate(reminder.date)}</Text>
+            ) : null}
             {reminder.time ? <Text>Time: {reminder.time}</Text> : null}
             <Text>Type: {reminder.type}</Text>
           </View>

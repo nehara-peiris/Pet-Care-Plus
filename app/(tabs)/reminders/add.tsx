@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { addDoc, collection, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
 import { registerForPushNotificationsAsync, scheduleReminderNotification } from "../../../lib/notifications";
+import { Timestamp } from "firebase/firestore";
 
 
 export default function AddReminderScreen() {
@@ -33,8 +34,8 @@ export default function AddReminderScreen() {
   }, []);
 
   const handleAddReminder = async () => {
-    if (!title || !petId) {
-      Alert.alert("Error", "Title and Pet are required!");
+    if (!title || !petId || !date || !time) {
+      Alert.alert("Error", "Title, Date, Time, and Pet are required!");
       return;
     }
 
@@ -45,13 +46,15 @@ export default function AddReminderScreen() {
         return;
       }
 
+      // Combine date + time into JS Date
+      const reminderDate = new Date(`${date}T${time}:00`);
+
       await addDoc(collection(db, "reminders"), {
         userId: user.uid,
         petId,
         title,
-        date,
-        time,
         type,
+        date: Timestamp.fromDate(reminderDate), // ✅ Save as Firestore Timestamp
         createdAt: serverTimestamp(),
       });
 
@@ -64,6 +67,7 @@ export default function AddReminderScreen() {
       Alert.alert("Error", err.message);
     }
   };
+
 
   return (
     <View style={styles.container}>

@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Image } from "react-native";
+import { useTheme } from "../contexts/ThemeContext";
 
 type PetCardProps = {
   name: string;
@@ -7,43 +8,62 @@ type PetCardProps = {
 };
 
 export default function PetCard({ name, type, imageUrl }: PetCardProps) {
+
+  const { theme } = useTheme();
+
   return (
-    <View style={styles.card}>
+    <View style={[
+        styles.card,
+        theme === "dark" && { backgroundColor: "#1e1e1e", borderColor: "#333" }
+      ]}>
       {imageUrl ? (
         <Image source={{ uri: imageUrl }} style={styles.image} />
       ) : (
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>🐾</Text>
+        <View style={[styles.placeholder, theme === "dark" && { backgroundColor: "#333" }]}>
+          <Text style={[
+            styles.placeholderText,
+            theme === "dark" && { color: "#aaa" }
+          ]}>🐾</Text>
         </View>
       )}
-      <View>
-        <Text style={styles.name}>{name}</Text>
-        <Text style={styles.type}>{type}</Text>
-      </View>
+      <Text style={[styles.name, theme === "dark" && { color: "#fff" }]}>{name}</Text>
+      <Text style={[styles.type, theme === "dark" && { color: "#bbb" }]}>{type}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    marginVertical: 8,
-    backgroundColor: "#eee",
-    borderRadius: 8,
-  },
-  image: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
-  placeholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 120,
+    height: 160,
+    backgroundColor: "#fff",
+    borderRadius: 12,
     marginRight: 12,
-    backgroundColor: "#ccc",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 3,
+    padding: 10,
+  },
+  image: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginBottom: 10,
+  },
+  placeholder: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginBottom: 10,
+    backgroundColor: "#f0f0f0",
     justifyContent: "center",
     alignItems: "center",
   },
-  placeholderText: { fontSize: 22 },
-  name: { fontSize: 18, fontWeight: "bold" },
-  type: { fontSize: 14, color: "gray" },
+  placeholderText: { fontSize: 28 },
+  name: { fontSize: 16, fontWeight: "bold", textAlign: "center" },
+  type: { fontSize: 14, color: "gray", textAlign: "center", marginTop: 2 },
 });

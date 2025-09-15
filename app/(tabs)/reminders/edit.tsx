@@ -4,6 +4,7 @@ import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { Timestamp } from "firebase/firestore";
 
 export default function EditReminderScreen() {
   const router = useRouter();
@@ -22,9 +23,12 @@ export default function EditReminderScreen() {
       if (snap.exists()) {
         const r = snap.data();
         setTitle(r.title || "");
-        setDate(r.date || "");
-        setTime(r.time || "");
         setType(r.type || "");
+        if (r.date) {
+          const jsDate = r.date.toDate(); // Firestore Timestamp → JS Date
+          setDate(jsDate.toISOString().split("T")[0]); // YYYY-MM-DD
+          setTime(jsDate.toISOString().split("T")[1].slice(0, 5)); // HH:mm
+        }
       }
     };
     loadReminder();
@@ -33,8 +37,13 @@ export default function EditReminderScreen() {
   const handleUpdate = async () => {
     if (!id) return;
     try {
+      const reminderDate = new Date(`${date}T${time}:00`);
       const ref = doc(db, "reminders", id);
-      await updateDoc(ref, { title, date, time, type });
+      await updateDoc(ref, {
+        title,
+        type,
+        date: Timestamp.fromDate(reminderDate), // ✅ Save as Timestamp
+      });
       Alert.alert("Updated!", "Reminder updated successfully.");
       router.replace("/(tabs)/reminders");
     } catch (err: any) {
