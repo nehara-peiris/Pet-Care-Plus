@@ -1,23 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import * as Notifications from "expo-notifications";
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function WelcomeScreen() {
   const router = useRouter();
-
-  // 🔹 Ask for permissions when screen loads
-  useEffect(() => {
-    const requestPermission = async () => {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== "granted") {
-        // just silently skip, user can enable later
-        console.warn("Notifications permission not granted.");
-      }
-    };
-    requestPermission();
-  }, []);
 
   return (
     <LinearGradient colors={["#0A84FF", "#5AC8FA"]} style={styles.container}>

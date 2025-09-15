@@ -72,12 +72,23 @@ export default function AddReminderScreen() {
 
       
       // ✅ Schedule push notification
-      await scheduleReminderNotification(
+      const notificationId = await scheduleReminderNotification(
         title,
         date.toISOString().split("T")[0], // YYYY-MM-DD
         date.toTimeString().slice(0, 5),  // HH:mm
         repeat
       );
+
+      // ✅ Save to Firestore
+      await addDoc(collection(db, "reminders"), {
+        userId: user.uid,
+        petId,
+        title,
+        date: Timestamp.fromDate(date),
+        type: repeat,
+        createdAt: serverTimestamp(),
+        notificationId, // Store the notification ID
+      });
 
       Alert.alert("Success", "Reminder added!");
       router.replace("/(tabs)/dashboard");
