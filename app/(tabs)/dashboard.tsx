@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import PetCard from "../../components/PetCard";
@@ -16,6 +17,7 @@ import RecordCard from "../../components/RecordCard";
 import { collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { useTheme } from "@/contexts/ThemeContext";
+import { LineChart, PieChart } from "react-native-chart-kit";
 
 type Pet = {
   id: string;
@@ -117,10 +119,23 @@ export default function DashboardScreen() {
     };
   }, []);
 
+  const petTypeCounts = pets.reduce((acc: any, pet) => {
+    acc[pet.type] = (acc[pet.type] || 0) + 1;
+    return acc;
+  }, {});
+
+  const pieData = Object.keys(petTypeCounts).map((type, idx) => ({
+    name: type,
+    population: petTypeCounts[type],
+    color: ["#21706f", "#f4976c", "#6096ba", "#274c77"][idx % 4],
+    legendFontColor: "#333",
+    legendFontSize: 12,
+  }));
+
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="blue" />
+        <ActivityIndicator size="large" color="#21706f" />
       </View>
     );
   }
@@ -132,14 +147,12 @@ export default function DashboardScreen() {
         theme === "dark" && { backgroundColor: "#121212" }
       ]}
       >
-      {/* 🔹 Custom Header */}
+      
+       {/* 🔹 Dashboard Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           {auth.currentUser?.photoURL ? (
-            <Image
-              source={{ uri: auth.currentUser.photoURL }}
-              style={styles.profilePic}
-            />
+            <Image source={{ uri: auth.currentUser.photoURL }} style={styles.profilePic} />
           ) : (
             <View style={styles.profilePlaceholder}>
               <Text style={styles.profileInitial}>
@@ -152,28 +165,33 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>Hi, {userName} 👋</Text>
           </View>
         </View>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/settings")}>
+          <Text style={styles.headerIcon}>⚙️</Text>
+        </TouchableOpacity>
+      </View>
 
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/settings")}
-            style={styles.headerBtn}
-          >
-            <Text style={styles.headerIcon}>⚙️</Text>
-          </TouchableOpacity>
+      {/* 🔹 Quick Stats */}
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{pets.length}</Text>
+          <Text style={styles.statLabel}>Pets</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{reminders.length}</Text>
+          <Text style={styles.statLabel}>Reminders</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{records.length}</Text>
+          <Text style={styles.statLabel}>Records</Text>
         </View>
       </View>
 
-      {/* Pets Section */}
-      <View style={styles.sectionHeader}>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/pets")}>
-          <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-            🐾 My Pets
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/pets/add")}>
-          <Text style={styles.addText}>+Add</Text>
-        </TouchableOpacity>
-      </View>
+       {/* Pets Section */}
+      <TouchableOpacity onPress={() => router.push("/(tabs)/pets")}>
+        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
+          🐾 My Pets
+        </Text>
+      </TouchableOpacity>
 
       {pets.length === 0 ? (
         <Text style={styles.empty}>No pets yet. Add one!</Text>
@@ -189,21 +207,16 @@ export default function DashboardScreen() {
           ))}
         </ScrollView>
       )}
-
-      {/* Reminders Section */}
-      <View style={styles.sectionHeader}>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/reminders")}>
-          <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-            ⏰ Upcoming Reminders
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push("/(tabs)/reminders/add")}
-        >
-          <Text style={styles.addText}>+Add</Text>
-        </TouchableOpacity>
+      <View style={styles.addBtn}>
+        <Button title="Add Pet" onPress={() => router.push("/(tabs)/pets/add")} />
       </View>
 
+      {/* Reminders Section */}
+      <TouchableOpacity onPress={() => router.push("/(tabs)/reminders")}>
+        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
+          ⏰ Upcoming Reminders
+        </Text>
+      </TouchableOpacity>
       {reminders.length === 0 ? (
         <Text style={styles.empty}>No reminders yet. Add one!</Text>
       ) : (
@@ -225,31 +238,25 @@ export default function DashboardScreen() {
             />
           ))}
         </View>
-      )}      
+      )}
+      <View style={styles.addBtn}>
+        <Button
+          title="Add Reminder"
+          onPress={() => router.push("/(tabs)/reminders/add")}
+        />
+      </View>
 
 
       {/* Records Section */}
-      <View style={styles.sectionHeader}>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/records")}>
-          <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-            📑 Medical Record
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push("/(tabs)/records/add")}
-        >
-          <Text style={styles.addText}>+Add</Text>
-        </TouchableOpacity>
-      </View>
-
+      <TouchableOpacity onPress={() => router.push("/(tabs)/records")}>
+        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
+          📑 Medical Record
+        </Text>
+      </TouchableOpacity>
       {records.length === 0 ? (
         <Text style={styles.empty}>No records yet. Add one!</Text>
       ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginVertical: 10 }}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
           {records.slice(0, 5).map((record) => (
             <RecordCard
               key={record.id}
@@ -266,6 +273,9 @@ export default function DashboardScreen() {
           ))}
         </ScrollView>
       )}
+      <View style={styles.addBtn}>
+        <Button title="Add Record" onPress={() => router.push("/(tabs)/records/add")} />
+      </View>
     </ScrollView>
   );
 }
@@ -424,16 +434,23 @@ const styles = StyleSheet.create({
     color: "gray",
     textAlign: "center",
   },
-  sectionHeader: {
+  statsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: "#fff",
+    marginHorizontal: 5,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 4,
     alignItems: "center",
-    marginTop: 10,
   },
-  addText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#007AFF",
-    paddingHorizontal: 8,
-  },
+  statValue: { fontSize: 22, fontWeight: "bold", color: "#21706f" },
+  statLabel: { fontSize: 14, color: "#555", marginTop: 4 },
 });

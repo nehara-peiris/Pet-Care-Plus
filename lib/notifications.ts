@@ -53,6 +53,7 @@ export async function scheduleReminderNotification(
   } else {
     // once — cast Date to NotificationTriggerInput
     trigger = triggerDate as unknown as NotificationTriggerInput;
+    
   }
 
   const id = await Notifications.scheduleNotificationAsync({
