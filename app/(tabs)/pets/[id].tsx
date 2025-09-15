@@ -1,8 +1,9 @@
 import { useLocalSearchParams, useRouter } from "expo-router"; 
-import { View, Text, StyleSheet, Button, ActivityIndicator, Alert, Image, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Button, ActivityIndicator, Alert, Image, ScrollView, TouchableOpacity } from "react-native";
 import { useEffect, useState } from "react";
 import { doc, getDoc, deleteDoc, collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type Pet = {
   id: string;
@@ -13,6 +14,13 @@ type Pet = {
   imageUrl?: string;
 };
 
+type Record = {
+  id: string;
+  title: string;
+  date?: Timestamp;
+  fileUrl?: string;
+};
+
 export default function PetDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -20,6 +28,8 @@ export default function PetDetailsScreen() {
   const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
   const [reminders, setReminders] = useState<any[]>([]);
+  const [records, setRecords] = useState<Record[]>([]);
+  const { theme } = useTheme();
 
   const formatDate = (ts?: Timestamp | string, withTime = false) => {
     if (!ts) return "N/A";
@@ -72,6 +82,20 @@ export default function PetDetailsScreen() {
     return unsubscribe;
   }, [id]);
 
+  // Fetch records linked to this pet
+  useEffect(() => {
+    if (!id) return;
+    const recordsRef = collection(db, "records");
+    const q = query(recordsRef, where("petId", "==", id));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list: Record[] = [];
+      snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() } as Record));
+      setRecords(list);
+    });
+    return unsubscribe;
+  }, [id]);
+
   const handleDelete = async () => {
     if (!id) return;
     Alert.alert("Delete Pet", "Are you sure you want to delete this pet?", [
@@ -103,15 +127,24 @@ export default function PetDetailsScreen() {
   if (!pet) {
     return (
       <View style={styles.center}>
-        <Text>Pet not found</Text>
+        <Text style={[styles.text, theme === "dark" && styles.textDark]}>
+          Pet not found
+        </Text>
         <Button title="Back" onPress={() => router.back()} />
       </View>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{pet.name}</Text>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        theme === "dark" && styles.containerDark,
+      ]}
+    >
+      <Text style={[styles.title, theme === "dark" && styles.textDark]}>
+        {pet.name}
+      </Text>
 
       {pet.imageUrl ? (
         <Image
@@ -120,13 +153,26 @@ export default function PetDetailsScreen() {
         />
       ) : null}
 
-      <Text style={styles.detail}>Type: {pet.type}</Text>
-      {pet.age ? <Text style={styles.detail}>Age: {pet.age}</Text> : null}
-      {pet.breed ? <Text style={styles.detail}>Breed: {pet.breed}</Text> : null}
+      <Text style={[styles.detail, theme === "dark" && styles.textDark]}>
+        Type: {pet.type}
+      </Text>
+      {pet.age ? (
+        <Text style={[styles.detail, theme === "dark" && styles.textDark]}>
+          Age: {pet.age}
+        </Text>
+      ) : null}
+      {pet.breed ? (
+        <Text style={[styles.detail, theme === "dark" && styles.textDark]}>
+          Breed: {pet.breed}
+        </Text>
+      ) : null}
 
       <View style={styles.buttons}>
         <Button title="Back" onPress={() => router.back()} />
-        <Button title="Edit Pet" onPress={() => router.push(`/(tabs)/pets/edit?id=${pet.id}`)} />
+        <Button
+          title="Edit Pet"
+          onPress={() => router.push(`/(tabs)/pets/edit?id=${pet.id}`)}
+        />
       </View>
 
       <View style={{ marginTop: 20 }}>
@@ -134,41 +180,128 @@ export default function PetDetailsScreen() {
       </View>
 
       {/* Reminders Section */}
-      <Text style={styles.reminderTitle}>Reminders</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, theme === "dark" && styles.textDark]}>
+          Reminders
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.push(`/(tabs)/reminders/add?petId=${pet.id}`)}
+        >
+          <Text style={styles.addIcon}>➕</Text>
+        </TouchableOpacity>
+      </View>
       {reminders.length === 0 ? (
-        <Text style={styles.noReminders}>No reminders yet.</Text>
+        <Text style={[styles.noData, theme === "dark" && styles.textDark]}>
+          No reminders yet.
+        </Text>
       ) : (
         reminders.map((reminder) => (
-          <View key={reminder.id} style={styles.reminderCard}>
-            <Text style={styles.reminderText}>{reminder.title}</Text>
-            {reminder.date ? (
-              <Text>Date: {formatDate(reminder.date)}</Text>
-            ) : null}
-            {reminder.time ? <Text>Time: {reminder.time}</Text> : null}
-            <Text>Type: {reminder.type}</Text>
+          <View
+            key={reminder.id}
+            style={[
+              styles.card,
+              theme === "dark" && styles.cardDark,
+            ]}
+          >
+            <Text style={[styles.cardTitle, theme === "dark" && styles.textDark]}>
+              {reminder.title}
+            </Text>
+            {reminder.date && (
+              <Text style={[theme === "dark" && styles.textDark]}>
+                Date: {formatDate(reminder.date)}
+              </Text>
+            )}
+            {reminder.time && (
+              <Text style={[theme === "dark" && styles.textDark]}>
+                Time: {reminder.time}
+              </Text>
+            )}
+            <Text style={[theme === "dark" && styles.textDark]}>
+              Type: {reminder.type}
+            </Text>
           </View>
         ))
       )}
 
-      <View style={{ marginTop: 20 }}>
-        <Button
-          title="Add Reminder"
-          onPress={() => router.push(`/(tabs)/reminders/add?petId=${pet.id}`)}
-        />
+      {/* Records Section */}
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, theme === "dark" && styles.textDark]}>
+          Medical Records
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.push(`/(tabs)/records/add?petId=${pet.id}`)}
+        >
+          <Text style={styles.addIcon}>➕</Text>
+        </TouchableOpacity>
       </View>
+      {records.length === 0 ? (
+        <Text style={[styles.noData, theme === "dark" && styles.textDark]}>
+          No records yet.
+        </Text>
+      ) : (
+        records.map((record) => (
+          <View
+            key={record.id}
+            style={[
+              styles.card,
+              theme === "dark" && styles.cardDark,
+            ]}
+          >
+            <Text style={[styles.cardTitle, theme === "dark" && styles.textDark]}>
+              {record.title}
+            </Text>
+            {record.date && (
+              <Text style={[theme === "dark" && styles.textDark]}>
+                Date: {formatDate(record.date)}
+              </Text>
+            )}
+            {record.fileUrl && (
+              <Text
+                style={[
+                  { color: "blue", textDecorationLine: "underline" },
+                  theme === "dark" && { color: "#77aaff" },
+                ]}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/records/view",
+                    params: { id: record.id },
+                  })
+                }
+              >
+                View File
+              </Text>
+            )}
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 20, backgroundColor: "#fff" },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
-  detail: { fontSize: 18, marginBottom: 10 },
+  containerDark: { backgroundColor: "#121212" },
+
+  title: { fontSize: 28, fontWeight: "bold", marginBottom: 20, textAlign: "center", color: "#000" },
+  detail: { fontSize: 18, marginBottom: 10, color: "#333" },
+  text: { fontSize: 16, color: "#333" },
+  textDark: { color: "#fff" },
+
   buttons: { marginTop: 20, flexDirection: "row", justifyContent: "space-between" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  reminderTitle: { fontSize: 22, fontWeight: "bold", marginTop: 30 },
-  noReminders: { marginTop: 10, color: "gray" },
-  reminderCard: {
+
+  sectionHeader: {
+    marginTop: 30,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  sectionTitle: { fontSize: 22, fontWeight: "bold", color: "#000" },
+  addIcon: { fontSize: 22, color: "#007AFF", paddingHorizontal: 6 },
+
+  noData: { marginTop: 10, color: "gray" },
+
+  card: {
     marginTop: 10,
     padding: 12,
     borderWidth: 1,
@@ -176,5 +309,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "#f9f9f9",
   },
-  reminderText: { fontWeight: "bold", marginBottom: 5 },
+  cardDark: { backgroundColor: "#1e1e1e", borderColor: "#333" },
+
+  cardTitle: { fontWeight: "bold", marginBottom: 5, color: "#000" },
 });

@@ -70,16 +70,7 @@ export default function AddReminderScreen() {
         return;
       }
 
-      // ✅ Save reminder in Firestore
-      await addDoc(collection(db, "reminders"), {
-        userId: user.uid,
-        petId,
-        title,
-        type: repeat,
-        date: Timestamp.fromDate(date),
-        createdAt: serverTimestamp(),
-      });
-
+      
       // ✅ Schedule push notification
       await scheduleReminderNotification(
         title,

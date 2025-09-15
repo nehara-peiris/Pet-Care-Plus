@@ -1,10 +1,25 @@
-// app/(tabs)/pets/add.tsx
 import { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
+
+const CLOUD_NAME = "dc55dtavq";
+const UPLOAD_PRESET = "petcareplus_unsigned";
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
 export default function AddPetScreen() {
   const router = useRouter();
@@ -15,7 +30,72 @@ export default function AddPetScreen() {
   const [age, setAge] = useState("");
   const [breed, setBreed] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
 
+  // ✅ Pick from gallery (DocumentPicker)
+  const pickImage = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/*"],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+      if (!file) return;
+
+      await uploadImage(file.uri, file.name || "upload.jpg", file.mimeType || "image/jpeg");
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    }
+  };
+
+  // ✅ Take a photo
+  const takePhoto = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      const file = result.assets[0];
+      await uploadImage(file.uri, "camera.jpg", "image/jpeg");
+    }
+  };
+
+  // ✅ Upload to Cloudinary
+  const uploadImage = async (uri: string, name: string, type: string) => {
+    try {
+      setUploading(true);
+      let formData = new FormData();
+      formData.append("file", {
+        uri,
+        type,
+        name,
+      } as any);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      const res = await fetch(CLOUDINARY_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.secure_url) {
+        setImageUrl(data.secure_url);
+        Alert.alert("Success", "Image uploaded!");
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ✅ Save pet
   const handleAddPet = async () => {
     if (!name || !type) {
       Alert.alert("Error", "Name and Type are required!");
@@ -57,6 +137,28 @@ export default function AddPetScreen() {
         Add Pet
       </Text>
 
+      {/* Image Upload Section */}
+      <TouchableOpacity style={styles.imagePicker}>
+        {uploading ? (
+          <ActivityIndicator size="large" color="#007AFF" />
+        ) : imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: 120, height: 120, borderRadius: 60 }}
+          />
+        ) : (
+          <Text style={{ color: theme === "dark" ? "#fff" : "#555" }}>
+            No image selected
+          </Text>
+        )}
+      </TouchableOpacity>
+
+      <View style={styles.imageButtons}>
+        <Button title="Pick from Gallery" onPress={pickImage} />
+        <Button title="Take Photo" onPress={takePhoto} />
+      </View>
+
+      {/* Inputs */}
       <TextInput
         style={[
           styles.input,
@@ -114,20 +216,6 @@ export default function AddPetScreen() {
         value={breed}
         onChangeText={setBreed}
       />
-      <TextInput
-        style={[
-          styles.input,
-          theme === "dark" && {
-            backgroundColor: "#1e1e1e",
-            borderColor: "#333",
-            color: "#fff",
-          },
-        ]}
-        placeholder="Image URL (optional)"
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-        value={imageUrl}
-        onChangeText={setImageUrl}
-      />
 
       <Button
         title="Save Pet"
@@ -160,5 +248,20 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     backgroundColor: "#fff",
     color: "#000",
+  },
+  imagePicker: {
+    alignSelf: "center",
+    marginBottom: 10,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 20,
   },
 });

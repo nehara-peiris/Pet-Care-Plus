@@ -164,10 +164,11 @@ export default function SettingsScreen() {
       {/* Actions */}
       <TouchableOpacity
         style={styles.actionBtn}
-        onPress={() => setShowProfileModal(true)}
+        onPress={() => router.push("/(tabs)/settings/profile")}
       >
         <Text style={styles.actionText}>Edit Profile</Text>
       </TouchableOpacity>
+
 
       <TouchableOpacity
         style={styles.actionBtn}

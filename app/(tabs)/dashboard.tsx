@@ -163,14 +163,17 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-
-
-       {/* Pets Section */}
-      <TouchableOpacity onPress={() => router.push("/(tabs)/pets")}>
-        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-          🐾 My Pets
-        </Text>
-      </TouchableOpacity>
+      {/* Pets Section */}
+      <View style={styles.sectionHeader}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/pets")}>
+          <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
+            🐾 My Pets
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/pets/add")}>
+          <Text style={styles.addText}>+Add</Text>
+        </TouchableOpacity>
+      </View>
 
       {pets.length === 0 ? (
         <Text style={styles.empty}>No pets yet. Add one!</Text>
@@ -186,16 +189,21 @@ export default function DashboardScreen() {
           ))}
         </ScrollView>
       )}
-      <View style={styles.addBtn}>
-        <Button title="Add Pet" onPress={() => router.push("/(tabs)/pets/add")} />
-      </View>
 
       {/* Reminders Section */}
-      <TouchableOpacity onPress={() => router.push("/(tabs)/reminders")}>
-        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-          ⏰ Upcoming Reminders
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.sectionHeader}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/reminders")}>
+          <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
+            ⏰ Upcoming Reminders
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/reminders/add")}
+        >
+          <Text style={styles.addText}>+Add</Text>
+        </TouchableOpacity>
+      </View>
+
       {reminders.length === 0 ? (
         <Text style={styles.empty}>No reminders yet. Add one!</Text>
       ) : (
@@ -217,25 +225,31 @@ export default function DashboardScreen() {
             />
           ))}
         </View>
-      )}
-      <View style={styles.addBtn}>
-        <Button
-          title="Add Reminder"
-          onPress={() => router.push("/(tabs)/reminders/add")}
-        />
-      </View>
+      )}      
 
 
       {/* Records Section */}
-      <TouchableOpacity onPress={() => router.push("/(tabs)/records")}>
-        <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-          📑 Medical Record
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.sectionHeader}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/records")}>
+          <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
+            📑 Medical Record
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/records/add")}
+        >
+          <Text style={styles.addText}>+Add</Text>
+        </TouchableOpacity>
+      </View>
+
       {records.length === 0 ? (
         <Text style={styles.empty}>No records yet. Add one!</Text>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginVertical: 10 }}
+        >
           {records.slice(0, 5).map((record) => (
             <RecordCard
               key={record.id}
@@ -252,9 +266,6 @@ export default function DashboardScreen() {
           ))}
         </ScrollView>
       )}
-      <View style={styles.addBtn}>
-        <Button title="Add Record" onPress={() => router.push("/(tabs)/records/add")} />
-      </View>
     </ScrollView>
   );
 }
@@ -413,5 +424,16 @@ const styles = StyleSheet.create({
     color: "gray",
     textAlign: "center",
   },
-
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  addText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#007AFF",
+    paddingHorizontal: 8,
+  },
 });

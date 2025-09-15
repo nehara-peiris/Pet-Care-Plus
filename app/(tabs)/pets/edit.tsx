@@ -1,4 +1,3 @@
-// app/(tabs)/pets/edit.tsx
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -9,10 +8,18 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  TouchableOpacity,
+  Image,
 } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
+
+const CLOUD_NAME = "dc55dtavq";
+const UPLOAD_PRESET = "petcareplus_unsigned";
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
 export default function EditPetScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,7 +30,9 @@ export default function EditPetScreen() {
   const [type, setType] = useState("");
   const [age, setAge] = useState("");
   const [breed, setBreed] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -38,6 +47,7 @@ export default function EditPetScreen() {
           setType(pet.type || "");
           setAge(pet.age || "");
           setBreed(pet.breed || "");
+          setImageUrl(pet.imageUrl || "");
         }
         setLoading(false);
       } catch (err) {
@@ -49,6 +59,70 @@ export default function EditPetScreen() {
     fetchPet();
   }, [id]);
 
+  // ✅ Pick from gallery (DocumentPicker)
+  const pickImage = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/*"],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+      if (!file) return;
+
+      await uploadImage(file.uri, file.name || "upload.jpg", file.mimeType || "image/jpeg");
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    }
+  };
+
+  // ✅ Take a photo
+  const takePhoto = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      const file = result.assets[0];
+      await uploadImage(file.uri, "camera.jpg", "image/jpeg");
+    }
+  };
+
+  // ✅ Upload to Cloudinary
+  const uploadImage = async (uri: string, name: string, type: string) => {
+    try {
+      setUploading(true);
+      let formData = new FormData();
+      formData.append("file", {
+        uri,
+        type,
+        name,
+      } as any);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      const res = await fetch(CLOUDINARY_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.secure_url) {
+        setImageUrl(data.secure_url);
+        Alert.alert("Success", "Image uploaded!");
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ✅ Update Firestore
   const handleUpdate = async () => {
     if (!id) return;
     if (!name || !type) {
@@ -63,6 +137,7 @@ export default function EditPetScreen() {
         type,
         age,
         breed,
+        imageUrl,
       });
       Alert.alert("Success", "Pet updated successfully!");
       router.replace("/(tabs)/dashboard");
@@ -90,6 +165,28 @@ export default function EditPetScreen() {
         Edit Pet
       </Text>
 
+      {/* Image Section */}
+      <TouchableOpacity style={styles.imagePicker}>
+        {uploading ? (
+          <ActivityIndicator size="large" color="#007AFF" />
+        ) : imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: 120, height: 120, borderRadius: 60 }}
+          />
+        ) : (
+          <Text style={{ color: theme === "dark" ? "#fff" : "#555" }}>
+            No image selected
+          </Text>
+        )}
+      </TouchableOpacity>
+
+      <View style={styles.imageButtons}>
+        <Button title="Pick from Gallery" onPress={pickImage} />
+        <Button title="Take Photo" onPress={takePhoto} />
+      </View>
+
+      {/* Form Inputs */}
       <TextInput
         style={[
           styles.input,
@@ -184,4 +281,19 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  imagePicker: {
+    alignSelf: "center",
+    marginBottom: 10,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 20,
+  },
 });
