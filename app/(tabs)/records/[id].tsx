@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   Linking,
   ScrollView,
   Image,
@@ -17,6 +16,7 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system";
+import Toast from "react-native-toast-message";
 
 type Record = {
   id: string;
@@ -44,6 +44,11 @@ export default function RecordDetailsScreen() {
         if (snap.exists()) setRecord({ id: snap.id, ...snap.data() } as Record);
         setLoading(false);
       } catch {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Could not load record details."
+        });
         setLoading(false);
       }
     };
@@ -52,21 +57,21 @@ export default function RecordDetailsScreen() {
 
   const handleDelete = async () => {
     if (!id) return;
-    Alert.alert("Delete Record", "Are you sure you want to delete this record?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteDoc(doc(db, "records", id));
-            router.replace("/(tabs)/records");
-          } catch (err: any) {
-            Alert.alert("Error", err.message);
-          }
-        },
-      },
-    ]);
+    try {
+      await deleteDoc(doc(db, "records", id));
+      Toast.show({
+        type: "success",
+        text1: "Record deleted",
+        text2: `${record?.title || "Record"} has been removed.`,
+      });
+      router.replace("/(tabs)/records");
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: "Delete Failed",
+        text2: err.message || "Could not delete record.",
+      });
+    }
   };
 
   if (loading) {
@@ -78,6 +83,12 @@ export default function RecordDetailsScreen() {
   }
 
   if (!record) {
+    Toast.show({
+      type: "error",
+      text1: "Not Found",
+      text2: "This record does not exist or has been removed."
+    });
+
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <Text style={[styles.notFound, { color: colors.text }]}>
@@ -86,6 +97,7 @@ export default function RecordDetailsScreen() {
       </View>
     );
   }
+
 
   const isImage = record.fileUrl?.match(/\.(jpg|jpeg|png|gif)$/i);
   const isPdf = record.fileUrl?.endsWith(".pdf");

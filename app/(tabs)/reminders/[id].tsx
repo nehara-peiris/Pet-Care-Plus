@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
+import Toast from "react-native-toast-message";
 
 export default function ReminderDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,12 +29,22 @@ export default function ReminderDetailsScreen() {
     if (!id) return;
     try {
       await deleteDoc(doc(db, "reminders", id));
-      Alert.alert("Deleted", "Reminder removed.");
+      Toast.show({
+        type: "success",
+        text1: "Deleted",
+        text2: "Reminder removed successfully.",
+      });
       router.replace("/(tabs)/reminders");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: err.message || "Could not delete reminder.",
+      });
     }
   };
+
+
 
   if (loading) {
     return (

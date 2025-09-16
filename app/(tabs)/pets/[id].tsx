@@ -7,7 +7,6 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { useEffect, useState } from "react";
 import {
@@ -24,6 +23,7 @@ import { db } from "../../../lib/firebase";
 import { useTheme } from "@/contexts/ThemeContext";
 import { exportRecords } from "@/lib/exportRecords";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
 
 type Pet = {
   id: string;
@@ -82,6 +82,11 @@ export default function PetDetailsScreen() {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching pet:", err);
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Could not load pet details."
+        });
         setLoading(false);
       }
     };
@@ -116,9 +121,18 @@ export default function PetDetailsScreen() {
     if (!id) return;
     try {
       await deleteDoc(doc(db, "pets", id));
+      Toast.show({
+        type: "success",
+        text1: "Pet deleted",
+        text2: `${pet?.name || "Pet"} has been removed.`
+      });
       router.replace("/(tabs)/dashboard");
     } catch (err: any) {
-      console.error("Delete error:", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Delete Failed",
+        text2: err.message || "Could not delete pet."
+      });
     }
   };
 
@@ -131,10 +145,19 @@ export default function PetDetailsScreen() {
   }
 
   if (!pet) {
+    Toast.show({
+      type: "error",
+      text1: "Not Found",
+      text2: "This pet does not exist or has been removed."
+    });
+
     return (
       <View style={styles.center}>
         <Text style={[styles.text, { color: colors.text }]}>Pet not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.button, { backgroundColor: colors.primary }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={[styles.button, { backgroundColor: colors.primary }]}
+        >
           <Text style={{ color: "#fff" }}>Back</Text>
         </TouchableOpacity>
       </View>
@@ -163,8 +186,17 @@ export default function PetDetailsScreen() {
           onPress={async () => {
             try {
               await exportRecords("pet", pet.id);
+              Toast.show({
+                type: "success",
+                text1: "Export Successful",
+                text2: `${pet.name}'s records exported.`
+              });
             } catch (err: any) {
-              Alert.alert("Error", err.message);
+              Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: err.message || "Something went wrong."
+              });
             }
           }}
         >
@@ -190,7 +222,14 @@ export default function PetDetailsScreen() {
         </TouchableOpacity>
       </View>
       {reminders.length === 0 ? (
-        <Text style={[styles.noData, { color: colors.icon }]}>No reminders yet.</Text>
+        <>
+          {Toast.show({
+            type: "info",
+            text1: "No Reminders",
+            text2: "You haven’t added any reminders yet."
+          })}
+          <Text style={[styles.noData, { color: colors.icon }]}>No reminders yet.</Text>
+        </>
       ) : (
         reminders.map((reminder) => (
           <View key={reminder.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -210,7 +249,14 @@ export default function PetDetailsScreen() {
         </TouchableOpacity>
       </View>
       {records.length === 0 ? (
-        <Text style={[styles.noData, { color: colors.icon }]}>No records yet.</Text>
+        <>
+          {Toast.show({
+            type: "info",
+            text1: "No Records",
+            text2: "You haven’t added any medical records yet."
+          })}
+          <Text style={[styles.noData, { color: colors.icon }]}>No records yet.</Text>
+        </>      
       ) : (
         records.map((record) => (
           <View key={record.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
