@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Switch,
   TouchableOpacity,
-  Alert,
   Modal,
   TextInput,
   Image,
@@ -22,14 +21,13 @@ import {
 } from "firebase/auth";
 import * as ImagePicker from "expo-image-picker";
 import { useTheme } from "../../../contexts/ThemeContext";
-
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import Toast from "react-native-toast-message";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const user = auth.currentUser;
-  const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const { theme, toggleTheme } = useTheme();
 
@@ -50,8 +48,9 @@ export default function SettingsScreen() {
     try {
       await auth.signOut();
       router.replace("/(auth)/login");
+      Toast.show({ type: "success", text1: "Logged out" });
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({ type: "error", text1: "Error", text2: err.message });
     }
   };
 
@@ -59,22 +58,26 @@ export default function SettingsScreen() {
   const confirmPasswordChange = async () => {
     if (!user || !user.email) return;
     if (!currentPassword || !newPassword) {
-      Alert.alert("Error", "Both current and new password are required.");
+      Toast.show({
+        type: "error",
+        text1: "Validation Failed",
+        text2: "Both current and new password are required.",
+      });
       return;
     }
 
     try {
       const cred = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(user, cred);
-
       await updatePassword(user, newPassword);
 
       setShowPasswordModal(false);
       setCurrentPassword("");
       setNewPassword("");
-      Alert.alert("Success", "Password updated successfully.");
+
+      Toast.show({ type: "success", text1: "Password updated successfully" });
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({ type: "error", text1: "Error", text2: err.message });
     }
   };
 
@@ -82,22 +85,22 @@ export default function SettingsScreen() {
   const confirmDelete = async () => {
     if (!user || !user.email) return;
     if (!deletePassword) {
-      Alert.alert("Error", "Password is required.");
+      Toast.show({ type: "error", text1: "Password is required" });
       return;
     }
 
     try {
       const cred = EmailAuthProvider.credential(user.email, deletePassword);
       await reauthenticateWithCredential(user, cred);
-
       await deleteUser(user);
 
       setShowDeleteModal(false);
       setDeletePassword("");
-      Alert.alert("Deleted", "Your account has been permanently deleted.");
+
+      Toast.show({ type: "success", text1: "Account deleted permanently" });
       router.replace("/(auth)/login");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({ type: "error", text1: "Error", text2: err.message });
     }
   };
 
@@ -121,59 +124,74 @@ export default function SettingsScreen() {
       });
 
       setShowProfileModal(false);
-      Alert.alert("Success", "Profile updated!");
+      Toast.show({ type: "success", text1: "Profile updated" });
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({ type: "error", text1: "Error", text2: err.message });
     }
   };
 
+  // 🔹 Toggle notifications
   const handleToggleNotifications = async (value: boolean) => {
     setNotifications(value);
-
     const user = auth.currentUser;
     if (user) {
-      await updateDoc(doc(db, "users", user.uid), { notifications: value });
+      try {
+        await updateDoc(doc(db, "users", user.uid), { notifications: value });
+        Toast.show({
+          type: "info",
+          text1: "Notifications",
+          text2: value ? "Enabled" : "Disabled",
+        });
+      } catch (err: any) {
+        Toast.show({ type: "error", text1: "Error", text2: err.message });
+      }
     }
   };
 
   return (
-    <View style={[ styles.container,  theme === "dark" && { backgroundColor: "#121212" }, ]}>
+    <View style={[styles.container, theme === "dark" && { backgroundColor: "#121212" }]}>
       {/* Profile */}
       <View style={[styles.profileCard, theme === "dark" && { backgroundColor: "#1e1e1e" }]}>
         {user?.photoURL ? (
           <Image source={{ uri: user.photoURL }} style={styles.profilePic} />
         ) : (
-          <View style={[styles.profilePic,theme === "dark" ? { backgroundColor: "#333" } : { backgroundColor: "#ddd" },]}>
+          <View
+            style={[
+              styles.profilePic,
+              theme === "dark" ? { backgroundColor: "#333" } : { backgroundColor: "#ddd" },
+            ]}
+          >
             <Text style={{ fontSize: 20 }}>👤</Text>
           </View>
         )}
-        <Text style={[styles.profileTitle, theme === "dark" && { color: "#fff" }]}>{user?.displayName || "User"}</Text>
-        <Text style={[styles.profileEmail, theme === "dark" && { color: "#aaa" }]}>{user?.email}</Text>
+        <Text style={[styles.profileTitle, theme === "dark" && { color: "#fff" }]}>
+          {user?.displayName || "User"}
+        </Text>
+        <Text style={[styles.profileEmail, theme === "dark" && { color: "#aaa" }]}>
+          {user?.email}
+        </Text>
       </View>
 
       {/* Toggles */}
       <View style={styles.settingRow}>
-        <Text style={[styles.settingText, theme === "dark" && { color: "#fff" }]}>🌙 Dark Mode</Text>
+        <Text style={[styles.settingText, theme === "dark" && { color: "#fff" }]}>
+          🌙 Dark Mode
+        </Text>
         <Switch value={theme === "dark"} onValueChange={toggleTheme} />
       </View>
       <View style={styles.settingRow}>
-        <Text style={[styles.settingText, theme === "dark" && { color: "#fff" }]}>🔔 Notifications</Text>
+        <Text style={[styles.settingText, theme === "dark" && { color: "#fff" }]}>
+          🔔 Notifications
+        </Text>
         <Switch value={notifications} onValueChange={handleToggleNotifications} />
       </View>
 
       {/* Actions */}
-      <TouchableOpacity
-        style={styles.actionBtn}
-        onPress={() => router.push("/(tabs)/settings/profile")}
-      >
+      <TouchableOpacity style={styles.actionBtn} onPress={() => setShowProfileModal(true)}>
         <Text style={styles.actionText}>Edit Profile</Text>
       </TouchableOpacity>
 
-
-      <TouchableOpacity
-        style={styles.actionBtn}
-        onPress={() => setShowPasswordModal(true)}
-      >
+      <TouchableOpacity style={styles.actionBtn} onPress={() => setShowPasswordModal(true)}>
         <Text style={styles.actionText}>Change Password</Text>
       </TouchableOpacity>
 
@@ -196,7 +214,6 @@ export default function SettingsScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Update Profile</Text>
-
             <TouchableOpacity onPress={pickProfileImage}>
               {newPhoto ? (
                 <Image source={{ uri: newPhoto }} style={styles.modalPic} />
@@ -206,14 +223,12 @@ export default function SettingsScreen() {
                 </View>
               )}
             </TouchableOpacity>
-
             <TextInput
               style={styles.input}
               placeholder="Display Name"
               value={newName}
               onChangeText={setNewName}
             />
-
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
@@ -232,13 +247,11 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-
       {/* 🔹 Change Password Modal */}
       <Modal transparent visible={showPasswordModal} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Change Password</Text>
-
             <TextInput
               style={styles.input}
               placeholder="Current Password"
@@ -253,7 +266,6 @@ export default function SettingsScreen() {
               value={newPassword}
               onChangeText={setNewPassword}
             />
-
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
@@ -265,7 +277,6 @@ export default function SettingsScreen() {
               >
                 <Text>Cancel</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: "#007AFF" }]}
                 onPress={confirmPasswordChange}
@@ -285,7 +296,6 @@ export default function SettingsScreen() {
             <Text style={styles.modalDesc}>
               Enter your password to permanently delete your account.
             </Text>
-
             <TextInput
               style={styles.input}
               placeholder="Password"
@@ -293,7 +303,6 @@ export default function SettingsScreen() {
               value={deletePassword}
               onChangeText={setDeletePassword}
             />
-
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
@@ -304,7 +313,6 @@ export default function SettingsScreen() {
               >
                 <Text>Cancel</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: "#ff4d4d" }]}
                 onPress={confirmDelete}
