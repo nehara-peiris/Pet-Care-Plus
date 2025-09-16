@@ -281,12 +281,6 @@ export default function EditReminderScreen() {
         <Text style={styles.btnText}>💾 Update Reminder</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.btn, { backgroundColor: "red" }]}
-        onPress={handleDelete}
-      >
-        <Text style={styles.btnText}>🗑 Delete Reminder</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
         style={[styles.btn, { backgroundColor: colors.border }]}
         onPress={() => router.back()}
       >

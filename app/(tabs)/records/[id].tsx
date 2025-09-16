@@ -14,8 +14,6 @@ import { doc, getDoc, deleteDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
-import * as Sharing from "expo-sharing";
-import * as FileSystem from "expo-file-system";
 import Toast from "react-native-toast-message";
 
 type Record = {
@@ -47,7 +45,7 @@ export default function RecordDetailsScreen() {
         Toast.show({
           type: "error",
           text1: "Error",
-          text2: "Could not load record details."
+          text2: "Could not load record details.",
         });
         setLoading(false);
       }
@@ -86,7 +84,7 @@ export default function RecordDetailsScreen() {
     Toast.show({
       type: "error",
       text1: "Not Found",
-      text2: "This record does not exist or has been removed."
+      text2: "This record does not exist or has been removed.",
     });
 
     return (
@@ -97,7 +95,6 @@ export default function RecordDetailsScreen() {
       </View>
     );
   }
-
 
   const isImage = record.fileUrl?.match(/\.(jpg|jpeg|png|gif)$/i);
   const isPdf = record.fileUrl?.endsWith(".pdf");
@@ -120,21 +117,17 @@ export default function RecordDetailsScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={styles.container}
     >
+      <Text style={[styles.title, { color: colors.text }]}>{record.title}</Text>
+
       <View
         style={[
           styles.card,
           { backgroundColor: colors.card, borderColor: colors.border },
         ]}
       >
-        <Text style={[styles.title, { color: colors.text }]}>
-          {record.title}
-        </Text>
-
         {record.date && (
           <Text style={[styles.detail, { color: colors.icon }]}>
             📅 {formatDate(record.date)}
@@ -172,7 +165,7 @@ export default function RecordDetailsScreen() {
       {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: colors.primary }]}
+          style={[styles.button, { backgroundColor: colors.primary }]}
           onPress={() =>
             router.push({
               pathname: "/(tabs)/records/edit",
@@ -184,7 +177,7 @@ export default function RecordDetailsScreen() {
           <Text style={styles.btnText}>Edit</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: "red" }]}
+          style={[styles.button, { backgroundColor: "red" }]}
           onPress={handleDelete}
         >
           <Ionicons name="trash-outline" size={18} color="#fff" />
@@ -196,35 +189,43 @@ export default function RecordDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20 },
+  container: { padding: 20 },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
   card: {
     borderWidth: 1,
     borderRadius: 12,
     padding: 16,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
     elevation: 3,
   },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
-  detail: { fontSize: 15, marginBottom: 6 },
-  subDetail: { fontSize: 13, marginBottom: 6 },
+  detail: { fontSize: 16, marginBottom: 6 },
+  subDetail: { fontSize: 14, marginBottom: 6 },
   image: { width: "100%", height: 220, borderRadius: 10 },
   link: { fontSize: 16, textDecorationLine: "underline", marginTop: 12 },
   notFound: { fontSize: 18 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   actions: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     marginTop: 20,
   },
-  btn: {
+  button: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
+    justifyContent: "center",
+    padding: 14,
     borderRadius: 8,
-    gap: 6,
+    marginHorizontal: 5,
   },
-  btnText: { color: "#fff", fontWeight: "bold", fontSize: 15 },
+  btnText: { color: "#fff", fontWeight: "bold", fontSize: 16, marginLeft: 6 },
 });
