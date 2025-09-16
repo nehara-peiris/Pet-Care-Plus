@@ -1,106 +1,69 @@
-// app/(tabs)/reminders/edit.tsx
 import { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  Alert,
-  Platform,
-} from "react-native";
+import { View, Text, TextInput, StyleSheet, Alert, Platform, Button } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  Timestamp,
-  collection,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteDoc, Timestamp, getDocs, collection, where, query } from "firebase/firestore";
 import { db, auth } from "../../../lib/firebase";
+import { scheduleReminderNotification } from "../../../lib/notifications";
 import { useTheme } from "../../../contexts/ThemeContext";
-import {
-  scheduleReminderNotification,
-  cancelReminderNotification,
-} from "../../../lib/notifications";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function EditReminderScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { theme } = useTheme();
-  const { id } = useLocalSearchParams<{ id: string }>();
 
   const [title, setTitle] = useState("");
+  const [repeat, setRepeat] = useState<"once" | "daily" | "weekly">("once");
   const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [type, setType] = useState<"once" | "daily" | "weekly">("once");
-  const [notificationId, setNotificationId] = useState<string | null>(null);
-
-  // 🔹 Pet handling
   const [petId, setPetId] = useState("");
   const [pets, setPets] = useState<{ id: string; name: string }[]>([]);
+  const [showDate, setShowDate] = useState(false);
+  const [showTime, setShowTime] = useState(false);
 
   useEffect(() => {
-    const loadReminder = async () => {
+    const load = async () => {
       if (!id) return;
       const ref = doc(db, "reminders", id);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        const r = snap.data() as any;
+        const r: any = snap.data();
         setTitle(r.title || "");
-        setType(r.type || "once");
-        setNotificationId(r.notificationId || null);
+        setRepeat(r.type || "once");
+        if (r.date) setDate(r.date.toDate());
         setPetId(r.petId || "");
+      }
 
-        if (r.date) {
-          const jsDate = r.date.toDate();
-          setDate(jsDate);
-        }
+      // load pets
+      const user = auth.currentUser;
+      if (user) {
+        const q = query(collection(db, "pets"), where("userId", "==", user.uid));
+        const snapPets = await getDocs(q);
+        const list: { id: string; name: string }[] = [];
+        snapPets.forEach((doc) => list.push({ id: doc.id, name: doc.data().name }));
+        setPets(list);
       }
     };
-
-    const fetchPets = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-      const q = query(collection(db, "pets"), where("userId", "==", user.uid));
-      const snapshot = await getDocs(q);
-      const list: { id: string; name: string }[] = [];
-      snapshot.forEach((doc) => list.push({ id: doc.id, name: doc.data().name }));
-      setPets(list);
-    };
-
-    loadReminder();
-    fetchPets();
+    load();
   }, [id]);
 
   const handleUpdate = async () => {
     if (!id) return;
     try {
-      if (notificationId) {
-        await cancelReminderNotification(notificationId);
-      }
-
-      const newNotificationId = await scheduleReminderNotification(
-        title,
-        date.toISOString().split("T")[0],
-        date.toTimeString().slice(0, 5),
-        type
-      );
-
       const ref = doc(db, "reminders", id);
       await updateDoc(ref, {
         title,
-        type,
+        type: repeat,
         petId,
         date: Timestamp.fromDate(date),
-        notificationId: newNotificationId,
       });
+
+      await scheduleReminderNotification(
+        title,
+        date.toISOString().split("T")[0],
+        date.toTimeString().slice(0, 5),
+        repeat
+      );
 
       Alert.alert("Updated!", "Reminder updated successfully.");
       router.replace("/(tabs)/reminders");
@@ -112,9 +75,6 @@ export default function EditReminderScreen() {
   const handleDelete = async () => {
     if (!id) return;
     try {
-      if (notificationId) {
-        await cancelReminderNotification(notificationId);
-      }
       await deleteDoc(doc(db, "reminders", id));
       Alert.alert("Deleted!", "Reminder removed.");
       router.replace("/(tabs)/reminders");
@@ -124,17 +84,9 @@ export default function EditReminderScreen() {
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        theme === "dark" && { backgroundColor: "#121212" },
-      ]}
-    >
-      <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-        Edit Reminder
-      </Text>
+    <View style={[styles.container, theme === "dark" && { backgroundColor: "#121212" }]}>
+      <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>Edit Reminder</Text>
 
-      {/* Reminder Title */}
       <TextInput
         style={[styles.input, theme === "dark" && styles.inputDark]}
         value={title}
@@ -143,95 +95,63 @@ export default function EditReminderScreen() {
         placeholderTextColor={theme === "dark" ? "#888" : "#999"}
       />
 
-      {/* Date Picker */}
-      <View style={{ marginVertical: 10 }}>
-        <Button
-          title={`📅 Date: ${date.toLocaleDateString()}`}
-          onPress={() => setShowDatePicker(true)}
-        />
-      </View>
-      {showDatePicker && (
+      <Button title={`📅 Date: ${date.toLocaleDateString()}`} onPress={() => setShowDate(true)} />
+      {showDate && (
         <DateTimePicker
           value={date}
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setDate(selectedDate);
+          onChange={(e, d) => {
+            setShowDate(false);
+            if (d) setDate(d);
           }}
         />
       )}
 
-      {/* Time Picker */}
-      <View style={{ marginVertical: 10 }}>
-        <Button
-          title={`⏰ Time: ${date.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}`}
-          onPress={() => setShowTimePicker(true)}
-        />
-      </View>
-      {showTimePicker && (
+      <Button
+        title={`⏰ Time: ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+        onPress={() => setShowTime(true)}
+      />
+      {showTime && (
         <DateTimePicker
           value={date}
           mode="time"
           display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={(event, selectedTime) => {
-            setShowTimePicker(false);
-            if (selectedTime) setDate(selectedTime);
+          onChange={(e, d) => {
+            setShowTime(false);
+            if (d) setDate(d);
           }}
         />
       )}
 
-      {/* Repeat Picker */}
-      <Text style={[styles.label, theme === "dark" && { color: "#fff" }]}>
-        Repeat:
-      </Text>
-      <View style={[styles.pickerBox, theme === "dark" && styles.pickerBoxDark]}>
-        <Picker
-          selectedValue={type}
-          onValueChange={(value) => setType(value)}
-          dropdownIconColor={theme === "dark" ? "#fff" : "#000"}
-          style={[styles.picker, theme === "dark" && { color: "#fff" }]}
-        >
-          <Picker.Item label="Once" value="once" />
-          <Picker.Item label="Daily" value="daily" />
-          <Picker.Item label="Weekly" value="weekly" />
-        </Picker>
-      </View>
+      <Text style={[styles.label, theme === "dark" && { color: "#fff" }]}>Repeat:</Text>
+      <Picker selectedValue={repeat} onValueChange={(v) => setRepeat(v)}>
+        <Picker.Item label="Once" value="once" />
+        <Picker.Item label="Daily" value="daily" />
+        <Picker.Item label="Weekly" value="weekly" />
+      </Picker>
 
-      {/* Pet Selector */}
-      <Text style={[styles.label, theme === "dark" && { color: "#fff" }]}>
-        Pet:
-      </Text>
-      <View style={[styles.pickerBox, theme === "dark" && styles.pickerBoxDark]}>
-        <Picker
-          selectedValue={petId}
-          onValueChange={(value) => setPetId(value)}
-          dropdownIconColor={theme === "dark" ? "#fff" : "#000"}
-          style={[styles.picker, theme === "dark" && { color: "#fff" }]}
-        >
-          {pets.map((pet) => (
-            <Picker.Item key={pet.id} label={pet.name} value={pet.id} />
-          ))}
-        </Picker>
-      </View>
+      <Text style={[styles.label, theme === "dark" && { color: "#fff" }]}>Select Pet:</Text>
+      {pets.map((pet) => (
+        <Button
+          key={pet.id}
+          title={pet.name}
+          onPress={() => setPetId(pet.id)}
+          color={petId === pet.id ? "#0A84FF" : "gray"}
+        />
+      ))}
 
-      {/* Actions */}
-      <Button
-        title="Update"
-        color={theme === "dark" ? "#0A84FF" : undefined}
-        onPress={handleUpdate}
-      />
-      <View style={{ marginTop: 12 }} />
-      <Button title="Delete Reminder" color="red" onPress={handleDelete} />
+      <View style={{ marginTop: 20 }}>
+        <Button title="Update" color="#0A84FF" onPress={handleUpdate} />
+        <View style={{ marginTop: 10 }} />
+        <Button title="Delete Reminder" color="red" onPress={handleDelete} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
+  container: { flex: 1, padding: 20 },
   heading: { fontSize: 22, fontWeight: "bold", marginBottom: 16, textAlign: "center" },
   input: {
     borderWidth: 1,
@@ -242,22 +162,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     color: "#000",
   },
-  inputDark: {
-    backgroundColor: "#1e1e1e",
-    borderColor: "#333",
-    color: "#fff",
-  },
+  inputDark: { backgroundColor: "#1e1e1e", borderColor: "#333", color: "#fff" },
   label: { marginVertical: 10, fontWeight: "600" },
-  pickerBox: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    marginBottom: 15,
-    backgroundColor: "#fff",
-  },
-  pickerBoxDark: {
-    backgroundColor: "#1e1e1e",
-    borderColor: "#333",
-  },
-  picker: { height: 50, width: "100%" },
 });

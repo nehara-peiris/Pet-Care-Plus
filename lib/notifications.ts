@@ -33,30 +33,26 @@ export async function scheduleReminderNotification(
 ): Promise<string> {
   const triggerDate = new Date(`${date}T${time}:00`);
 
-  let trigger: Notifications.NotificationTriggerInput;
+  let trigger: NotificationTriggerInput;
 
   if (repeat === "daily") {
-    // Repeats daily at the specified hour and minute.
     trigger = {
+      // daily repeat (every 24h)
       hour: triggerDate.getHours(),
       minute: triggerDate.getMinutes(),
-      repeats: true, // This is correct for daily repeats
-    };
+      repeats: true,
+    } as NotificationTriggerInput;
   } else if (repeat === "weekly") {
-    // Repeats weekly on the specified weekday, at the specified time.
-    // weekday is 1-7 (Sun-Sat)
     trigger = {
-      weekday: triggerDate.getDay() + 1,
+      // weekly repeat (specific weekday + time)
+      weekday: triggerDate.getDay() === 0 ? 7 : triggerDate.getDay(),
       hour: triggerDate.getHours(),
       minute: triggerDate.getMinutes(),
-      repeats: true, // This is correct for weekly repeats
-    };
+      repeats: true,
+    } as NotificationTriggerInput;
   } else {
-    // A one-time trigger. Using a Date object directly is deprecated.
-    // We use a DateTriggerInput object instead.
-    trigger = {
-      date: triggerDate,
-    };
+    // once — cast Date to NotificationTriggerInput
+    trigger = triggerDate as unknown as NotificationTriggerInput;
   }
 
   const id = await Notifications.scheduleNotificationAsync({

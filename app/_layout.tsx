@@ -1,13 +1,8 @@
 import { useEffect } from "react";
 import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
-import { requestNotificationPermissions } from "../lib/notifications";
 
 export default function RootLayout() {
-  useEffect(() => {
-    requestNotificationPermissions();
-  }, []);
-
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
