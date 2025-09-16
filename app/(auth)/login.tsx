@@ -39,7 +39,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: "#D0F0C0" }]}>
       <View style={styles.card}>
         <Text style={styles.title}>Welcome Back 👋</Text>
         <Text style={styles.subtitle}>Login to continue</Text>

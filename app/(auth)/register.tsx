@@ -47,7 +47,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: "#D0F0C0" }]}>
       <View style={styles.card}>
         <Text style={styles.title}>Create Account ✨</Text>
         <Text style={styles.subtitle}>Join us and take care of your pets</Text>
