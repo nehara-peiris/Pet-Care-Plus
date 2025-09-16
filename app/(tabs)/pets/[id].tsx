@@ -18,12 +18,14 @@ import {
   where,
   onSnapshot,
   Timestamp,
+  getDocs,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useTheme } from "@/contexts/ThemeContext";
 import { exportRecords } from "@/lib/exportRecords";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
+import { Alert } from "react-native";
 
 type Pet = {
   id: string;
@@ -118,22 +120,54 @@ export default function PetDetailsScreen() {
   }, [id]);
 
   const handleDelete = async () => {
-    if (!id) return;
-    try {
-      await deleteDoc(doc(db, "pets", id));
-      Toast.show({
-        type: "success",
-        text1: "Pet deleted",
-        text2: `${pet?.name || "Pet"} has been removed.`,
-      });
-      router.replace("/(tabs)/dashboard");
-    } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: "Delete Failed",
-        text2: err.message || "Could not delete pet.",
-      });
-    }
+    if (!id || !pet) return;
+
+    Alert.alert(
+      "Confirm Delete",
+      `Do you really want to delete ${pet.name}? This will also remove all related reminders and records.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Delete reminders
+              const remindersRef = collection(db, "reminders");
+              const remindersQuery = query(remindersRef, where("petId", "==", id));
+              const remindersSnap = await getDocs(remindersQuery);
+              for (const r of remindersSnap.docs) {
+                await deleteDoc(doc(db, "reminders", r.id));
+              }
+
+              // Delete records
+              const recordsRef = collection(db, "records");
+              const recordsQuery = query(recordsRef, where("petId", "==", id));
+              const recordsSnap = await getDocs(recordsQuery);
+              for (const rec of recordsSnap.docs) {
+                await deleteDoc(doc(db, "records", rec.id));
+              }
+
+              // Delete the pet
+              await deleteDoc(doc(db, "pets", id));
+
+              Toast.show({
+                type: "success",
+                text1: "Pet Deleted",
+                text2: `${pet.name} and related data removed.`,
+              });
+              router.replace("/(tabs)/dashboard");
+            } catch (err: any) {
+              Toast.show({
+                type: "error",
+                text1: "Delete Failed",
+                text2: err.message || "Could not delete pet.",
+              });
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading) {
