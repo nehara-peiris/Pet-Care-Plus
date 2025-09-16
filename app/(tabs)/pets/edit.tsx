@@ -5,7 +5,6 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   Image,
   ActivityIndicator,
@@ -17,6 +16,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
 
 const CLOUD_NAME = "dc55dtavq";
 const UPLOAD_PRESET = "petcareplus_unsigned";
@@ -51,7 +51,11 @@ export default function EditPetScreen() {
         }
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching pet:", err);
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Could not fetch pet details.",
+        });
         setLoading(false);
       }
     };
@@ -68,8 +72,17 @@ export default function EditPetScreen() {
       if (result.canceled) return;
       const file = result.assets[0];
       await uploadImage(file.uri, file.name || "upload.jpg", file.mimeType || "image/jpeg");
+      Toast.show({
+        type: "success",
+        text1: "Image Selected",
+        text2: file.name,
+      });
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Image Selection Failed",
+        text2: err.message || "Could not pick an image.",
+      });
     }
   };
 
@@ -82,6 +95,11 @@ export default function EditPetScreen() {
     if (!result.canceled) {
       const file = result.assets[0];
       await uploadImage(file.uri, "camera.jpg", "image/jpeg");
+      Toast.show({
+        type: "success",
+        text1: "Photo Taken",
+        text2: "New pet image captured.",
+      });
     }
   };
 
@@ -98,7 +116,11 @@ export default function EditPetScreen() {
         setImageUrl(data.secure_url);
       } else throw new Error("Upload failed");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Upload Failed",
+        text2: err.message || "Could not upload image.",
+      });
     } finally {
       setUploading(false);
     }
@@ -108,15 +130,28 @@ export default function EditPetScreen() {
   const handleUpdate = async () => {
     if (!id) return;
     if (!name || !type) {
-      Alert.alert("Error", "Name and Type are required!");
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "Name and Type are required!",
+      });
       return;
     }
     try {
       const docRef = doc(db, "pets", id);
       await updateDoc(docRef, { name, type, age, breed, imageUrl });
+      Toast.show({
+        type: "success",
+        text1: "Pet Updated",
+        text2: `${name} has been updated successfully.`,
+      });
       router.replace("/(tabs)/dashboard");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Update Failed",
+        text2: err.message || "Could not update pet details.",
+      });
     }
   };
 

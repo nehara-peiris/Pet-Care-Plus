@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   Platform,
   ScrollView,
@@ -16,6 +15,7 @@ import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
 
 export default function EditRecordScreen() {
   const router = useRouter();
@@ -35,13 +35,27 @@ export default function EditRecordScreen() {
   useEffect(() => {
     if (!id) return;
     const loadRecord = async () => {
-      const ref = doc(db, "records", id);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const r = snap.data();
-        setTitle(r.title || "");
-        if (r.date instanceof Timestamp) setDate(r.date.toDate());
-        setCurrentFileUrl(r.fileUrl || "");
+      try {
+        const ref = doc(db, "records", id);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const r = snap.data();
+          setTitle(r.title || "");
+          if (r.date instanceof Timestamp) setDate(r.date.toDate());
+          setCurrentFileUrl(r.fileUrl || "");
+        } else {
+          Toast.show({
+            type: "error",
+            text1: "Not Found",
+            text2: "This record does not exist.",
+          });
+        }
+      } catch (err: any) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: err.message || "Failed to load record.",
+        });
       }
     };
     loadRecord();
@@ -53,9 +67,26 @@ export default function EditRecordScreen() {
         type: ["image/*", "application/pdf"],
         copyToCacheDirectory: true,
       });
-      if (!result.canceled) setFile(result.assets[0]);
+      if (!result.canceled) {
+        setFile(result.assets[0]);
+        Toast.show({
+          type: "success",
+          text1: "File Selected",
+          text2: result.assets[0].name,
+        });
+      } else {
+        Toast.show({
+          type: "info",
+          text1: "Cancelled",
+          text2: "File selection was cancelled.",
+        });
+      }
     } catch {
-      Alert.alert("Error", "Could not pick file");
+      Toast.show({
+        type: "error",
+        text1: "File Selection Failed",
+        text2: "Could not pick file. Please try again.",
+      });
     }
   };
 
@@ -75,14 +106,39 @@ export default function EditRecordScreen() {
 
     const json = await res.json();
     if (json.secure_url) return json.secure_url;
+
+    Toast.show({
+      type: "error",
+      text1: "Upload Failed",
+      text2: "Could not upload file to Cloudinary.",
+    });
     throw new Error("Cloudinary upload failed");
   };
 
   const handleUpdate = async () => {
     if (!id) return;
+
+    if (!title.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "Title is required!",
+      });
+      return;
+    }
+
     try {
       let fileUrl = currentFileUrl;
       if (file) fileUrl = await uploadToCloudinary(file);
+
+      if (title === "" && !file && !date) {
+        Toast.show({
+          type: "info",
+          text1: "No Changes",
+          text2: "Nothing to update.",
+        });
+        return;
+      }
 
       const ref = doc(db, "records", id);
       await updateDoc(ref, {
@@ -91,22 +147,48 @@ export default function EditRecordScreen() {
         fileUrl,
       });
 
-      Alert.alert("Updated!", "Record updated successfully.");
+      Toast.show({
+        type: "success",
+        text1: "Record Updated",
+        text2: `${title || "Record"} updated successfully.`,
+      });
+
       router.replace("/(tabs)/records");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Update Failed",
+        text2: err.message || "Could not update record.",
+      });
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+    >
       <Text style={[styles.heading, { color: colors.text }]}>✏️ Edit Record</Text>
 
       {/* Card wrapper */}
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
         {/* Title */}
         <TextInput
-          style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+              color: colors.text,
+            },
+          ]}
           value={title}
           onChangeText={setTitle}
           placeholder="Record Title"
@@ -115,11 +197,16 @@ export default function EditRecordScreen() {
 
         {/* Date Picker */}
         <TouchableOpacity
-          style={[styles.dateBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
+          style={[
+            styles.dateBtn,
+            { backgroundColor: colors.background, borderColor: colors.border },
+          ]}
           onPress={() => setShowDatePicker(true)}
         >
           <Ionicons name="calendar-outline" size={18} color={colors.icon} />
-          <Text style={{ color: colors.text, marginLeft: 8 }}>{date.toLocaleDateString()}</Text>
+          <Text style={{ color: colors.text, marginLeft: 8 }}>
+            {date.toLocaleDateString()}
+          </Text>
         </TouchableOpacity>
         {showDatePicker && (
           <DateTimePicker
@@ -139,20 +226,38 @@ export default function EditRecordScreen() {
           onPress={pickFile}
         >
           <Ionicons name="attach-outline" size={18} color="#fff" />
-          <Text style={{ color: "#fff", fontWeight: "bold", marginLeft: 6 }}>Pick New File</Text>
+          <Text
+            style={{ color: "#fff", fontWeight: "bold", marginLeft: 6 }}
+          >
+            Pick New File
+          </Text>
         </TouchableOpacity>
         {file ? (
-          <Text style={[styles.fileName, { color: colors.icon }]}>📎 {file.name}</Text>
+          <Text style={[styles.fileName, { color: colors.icon }]}>
+            📎 {file.name}
+          </Text>
         ) : currentFileUrl ? (
-          <Text style={[styles.fileName, { color: colors.icon }]}>📂 Existing file attached</Text>
-        ) : null}
+          <Text style={[styles.fileName, { color: colors.icon }]}>
+            📂 Existing file attached
+          </Text>
+        ) : (
+          <Text style={[styles.fileName, { color: colors.icon }]}>
+            ❌ No file attached
+          </Text>
+        )}
       </View>
 
       {/* Actions */}
-      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.primary }]} onPress={handleUpdate}>
+      <TouchableOpacity
+        style={[styles.btn, { backgroundColor: colors.primary }]}
+        onPress={handleUpdate}
+      >
         <Text style={styles.btnText}>💾 Update Record</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.border }]} onPress={() => router.back()}>
+      <TouchableOpacity
+        style={[styles.btn, { backgroundColor: colors.border }]}
+        onPress={() => router.back()}
+      >
         <Text style={[styles.btnText, { color: colors.text }]}>Cancel</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -161,7 +266,12 @@ export default function EditRecordScreen() {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 20 },
-  heading: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+  heading: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
   card: {
     borderWidth: 1,
     borderRadius: 12,
