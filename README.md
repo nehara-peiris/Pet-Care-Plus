@@ -1,50 +1,107 @@
-# Welcome to your Expo app 👋
+# 🐾 PetCarePlus
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+PetCarePlus is a **React Native + Firebase** mobile app designed to help pet owners manage their pets' **medical records, reminders, and personal details** in one place.  
+Built with **Expo**, **Firebase Auth/Firestore**, and **Cloudinary** for file uploads.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚀 Features
 
-   ```bash
-   npm install
-   ```
+✅ **Authentication**
+- User login & signup  
+- Password change & account deletion  
+- Profile editing with photo upload  
 
-2. Start the app
+✅ **Pet Management**
+- Add / Edit / Delete pets  
+- Upload pet profile pictures (via Cloudinary)  
+- Auto-delete pet’s reminders & records when pet is removed  
 
-   ```bash
-   npx expo start
-   ```
+✅ **Medical Records**
+- Add / Edit / Delete medical records  
+- File upload support (images, PDFs)  
+- Record export feature  
 
-In the output, you'll find options to open the app in a
+✅ **Reminders**
+- Add / Edit / Delete reminders  
+- Push notifications for daily, weekly, or one-time reminders  
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+✅ **Settings**
+- Dark/Light mode toggle  
+- Profile & password management  
+- Notifications toggle  
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+✅ **UI/UX**
+- Modern, clean interface with **Toast alerts**  
+- Consistent theming across screens  
+- Floating Action Buttons & Grid layouts  
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## 🛠️ Tech Stack
+- **Frontend:** React Native (Expo)  
+- **Backend:** Firebase Firestore + Firebase Auth  
+- **File Storage:** Cloudinary  
+- **Notifications:** Expo Notifications  
+- **State Management:** React Context API  
+
+---
+
+## 📸 Screenshots
+(Add your screenshots here)  
+- Login & Register  
+- Dashboard  
+- Pets Management  
+- Records & Reminders  
+- Settings  
+
+---
+
+## 📦 Installation
+
+Clone the repo:
 
 ```bash
-npm run reset-project
+git clone https://github.com/your-username/PetCarePlus.git
+cd PetCarePlus
+
+# install dependencies
+npm install
+
+# start expo project
+npx expo start
+
+## ▶️ Running the App
+
+- **Android:** Scan the QR code in Expo Go or run `npx expo run:android`  
+- **iOS:** Run `npx expo run:ios` (macOS required)  
+- **Web:** Run `npx expo start --web`
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 📲 APK Download
+👉 [Download APK here](#) <!-- replace with your APK link -->
 
-## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
+## 🎥 Demo Video
+👉 [Watch on YouTube](#) <!-- replace with your YouTube demo link -->
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 📚 Documentation
 
-## Join the community
+- **Firestore Collections:**
+  - `users` → user data, notifications settings  
+  - `pets` → pet profiles  
+  - `records` → medical records (with file URLs from Cloudinary)  
+  - `reminders` → scheduled reminders  
 
-Join our community of developers creating universal apps.
+- **Media Uploads:** Images/PDFs uploaded to Cloudinary → stored as secure URLs in Firestore.  
+- **Notifications:** Scheduled using Expo Notifications for one-time, daily, or weekly triggers.  
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 👨‍💻 Author
+**Shewmi Nehara Peiris**  
+- 🌐 [Portfolio](https://nehara.dev)  
+- 💼 [LinkedIn](https://linkedin.com/in/nehara-peiris-485361280)  
+- 📂 [GitHub](https://github.com/nehara-peiris)
+
+---
+This project was built as part of the **AMD Coursework** at **IJSE**.
+
