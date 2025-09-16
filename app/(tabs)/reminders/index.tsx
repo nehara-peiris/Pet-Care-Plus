@@ -11,6 +11,7 @@ import { useRouter } from "expo-router";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 type Reminder = {
   id: string;
@@ -21,7 +22,7 @@ type Reminder = {
 
 export default function RemindersScreen() {
   const router = useRouter();
-  const { theme } = useTheme();
+  const { colors } = useTheme();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +34,9 @@ export default function RemindersScreen() {
     const q = query(ref, where("userId", "==", user.uid));
     const unsub = onSnapshot(q, (snap) => {
       const list: Reminder[] = [];
-      snap.forEach((doc) => list.push({ id: doc.id, ...doc.data() } as Reminder));
+      snap.forEach((doc) =>
+        list.push({ id: doc.id, ...doc.data() } as Reminder)
+      );
       setReminders(list);
       setLoading(false);
     });
@@ -43,78 +46,92 @@ export default function RemindersScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0A84FF" />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View
-      style={[styles.container, theme === "dark" && { backgroundColor: "#121212" }]}
-    >
-      <Text style={[styles.heading, theme === "dark" && { color: "#fff" }]}>
-        🔔 My Reminders
-      </Text>
-
-      <TouchableOpacity
-        style={styles.addBtn}
-        onPress={() => router.push("/(tabs)/reminders/add")}
-      >
-        <Text style={styles.addBtnText}>+ Add Reminder</Text>
-      </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.heading, { color: colors.text }]}>🔔 My Reminders</Text>
 
       <FlatList
         data={reminders}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 80 }}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[
               styles.card,
-              theme === "dark" && { backgroundColor: "#1e1e1e", borderColor: "#333" },
+              { backgroundColor: colors.card, borderColor: colors.border },
             ]}
             onPress={() =>
-              router.push({ pathname: "/(tabs)/reminders/[id]", params: { id: item.id } })
+              router.push({
+                pathname: "/(tabs)/reminders/[id]",
+                params: { id: item.id },
+              })
             }
           >
-            <Text
-              style={[styles.title, theme === "dark" && { color: "#fff" }]}
-            >
+            <Text style={[styles.title, { color: colors.text }]}>
               {item.title}
             </Text>
             {item.date && (
-              <Text style={{ color: theme === "dark" ? "#aaa" : "#333" }}>
+              <Text style={{ color: colors.icon }}>
                 {item.date.toDate().toLocaleString()}
               </Text>
             )}
-            <Text style={{ color: "#0A84FF" }}>Repeat: {item.type}</Text>
+            <Text style={{ color: colors.primary }}>Repeat: {item.type}</Text>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No reminders yet</Text>}
+        ListEmptyComponent={
+          <Text style={[styles.empty, { color: colors.icon }]}>
+            No reminders yet
+          </Text>
+        }
       />
+
+      {/* Floating Add Button */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+        onPress={() => router.push("/(tabs)/reminders/add")}
+      >
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  heading: { fontSize: 24, fontWeight: "bold", marginBottom: 16, textAlign: "center" },
-  addBtn: {
-    backgroundColor: "#0A84FF",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    alignItems: "center",
-  },
-  addBtnText: { color: "#fff", fontWeight: "bold" },
+  heading: { fontSize: 22, fontWeight: "bold", marginBottom: 12 },
+  empty: { textAlign: "center", marginTop: 20 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
   card: {
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 14,
     marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  title: { fontSize: 18, fontWeight: "bold" },
-  empty: { textAlign: "center", marginTop: 20, color: "gray" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  title: { fontSize: 18, fontWeight: "bold", marginBottom: 4 },
+
+  fab: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
 });
