@@ -17,6 +17,7 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
 
 const CLOUD_NAME = "dc55dtavq";
 const UPLOAD_PRESET = "petcareplus_unsigned";
@@ -45,7 +46,11 @@ export default function AddPetScreen() {
       const file = result.assets[0];
       await uploadImage(file.uri, file.name || "upload.jpg", file.mimeType || "image/jpeg");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Image Error",
+        text2: err.message || "Could not pick image."
+      });
     }
   };
 
@@ -75,7 +80,11 @@ export default function AddPetScreen() {
         setImageUrl(data.secure_url);
       } else throw new Error("Upload failed");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Upload Error",
+        text2: err.message || "Could not upload image."
+      });
     } finally {
       setUploading(false);
     }
@@ -84,15 +93,25 @@ export default function AddPetScreen() {
   // Save pet
   const handleAddPet = async () => {
     if (!name || !type) {
-      Alert.alert("Error", "Name and Type are required!");
+      Toast.show({
+        type: "error",
+        text1: "Validation Failed",
+        text2: "Name and Type are required!"
+      });
       return;
     }
+
+    const user = auth.currentUser;
+    if (!user) {
+      Toast.show({
+        type: "error",
+        text1: "Not Logged In",
+        text2: "You must be logged in to add a pet."
+      });
+      return;
+    }
+
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        Alert.alert("Error", "You must be logged in to add a pet.");
-        return;
-      }
       await addDoc(collection(db, "pets"), {
         userId: user.uid,
         name,
@@ -102,11 +121,22 @@ export default function AddPetScreen() {
         imageUrl,
         createdAt: serverTimestamp(),
       });
+
+      Toast.show({
+        type: "success",
+        text1: "Pet Added",
+        text2: `${name} has been added successfully.`
+      });
+
       router.replace("/(tabs)/dashboard");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Save Error",
+        text2: err.message || "Could not save pet."
+      });
     }
-  };
+  }
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>

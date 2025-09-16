@@ -15,6 +15,7 @@ import { scheduleReminderNotification } from "../../../lib/notifications";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import Toast from "react-native-toast-message";
 
 export default function AddReminderScreen() {
   const router = useRouter();

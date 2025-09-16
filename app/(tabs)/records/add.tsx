@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  Alert,
   ScrollView,
   Platform,
   TouchableOpacity,
@@ -24,6 +23,7 @@ import {
 import { auth, db } from "../../../lib/firebase";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
 
 export default function AddRecordScreen() {
   const router = useRouter();
@@ -64,7 +64,11 @@ export default function AddRecordScreen() {
         setFile(result.assets[0]);
       }
     } catch {
-      Alert.alert("Error", "Could not pick file");
+      Toast.show({
+        type: "error",
+        text1: "File selection error",
+        text2: "Could not select the file. Please try again.",
+      });
     }
   };
 
@@ -89,14 +93,22 @@ export default function AddRecordScreen() {
 
   const handleAddRecord = async () => {
     if (!title || !petId) {
-      Alert.alert("Error", "Title and Pet are required!");
+      Toast.show({
+        type: "error",
+        text1: "Validation Failed",
+        text2: "Title and Pet are required!",
+      });
       return;
     }
 
     try {
       const user = auth.currentUser;
       if (!user) {
-        Alert.alert("Error", "You must be logged in.");
+        Toast.show({
+          type: "error",
+          text1: "Authentication Error. Not Logged In",
+          text2: "You must be logged in to add a record",
+        });
         return;
       }
 
@@ -114,10 +126,18 @@ export default function AddRecordScreen() {
         createdAt: serverTimestamp(),
       });
 
-      Alert.alert("Success", "Record added!");
+      Toast.show({
+        type: "success",
+        text1: "Record Added",
+        text2: `${title} has been saved successfully.`,
+      });
       router.replace("/(tabs)/dashboard");
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      Toast.show({
+        type: "error",
+        text1: "Error Adding Record",
+        text2: err.message || "An error occurred while adding the record.",
+      });
     }
   };
 
