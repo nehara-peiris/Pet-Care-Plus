@@ -136,7 +136,8 @@ export default function RecordsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  heading: { fontSize: 22, fontWeight: "bold", marginBottom: 12, textAlign: "center" },
+  heading: { fontSize: 22, fontWeight: "bold", marginBottom: 12 },
+
   empty: { textAlign: "center", marginTop: 20, fontSize: 16 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 

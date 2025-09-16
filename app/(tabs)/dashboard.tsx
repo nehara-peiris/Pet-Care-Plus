@@ -127,7 +127,7 @@ export default function DashboardScreen() {
         { backgroundColor: colors.background },
       ]}
     >
-      {/* 🔹 Header */}
+      {/* Header */}
       <View style={[styles.header, { borderColor: colors.border }]}>
         <View style={styles.headerLeft}>
           {auth.currentUser?.photoURL ? (
@@ -158,7 +158,7 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      {/* 🔹 Quick Stats */}
+      {/* Quick Stats */}
       <View style={styles.statsRow}>
         <View style={[styles.statCard, { backgroundColor: colors.card }]}>
           <Text style={[styles.statValue, { color: colors.primary }]}>{pets.length}</Text>
@@ -174,10 +174,15 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      {/* 🔹 Pets Section */}
-      <TouchableOpacity onPress={() => router.push("/(tabs)/pets")}>
-        <Text style={[styles.heading, { color: colors.text }]}>🐾 My Pets</Text>
-      </TouchableOpacity>
+      {/* Pets Section */}
+      <View style={styles.sectionHeader}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/pets")}>
+          <Text style={[styles.heading, { color: colors.text }]}>🐾 My Pets</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/pets/add")}>
+          <Text style={[styles.addLink, { color: colors.primary }]}>+ Add</Text>
+        </TouchableOpacity>
+      </View>
       {pets.length === 0 ? (
         <Text style={[styles.empty, { color: colors.text }]}>No pets yet. Add one!</Text>
       ) : (
@@ -192,14 +197,16 @@ export default function DashboardScreen() {
           ))}
         </ScrollView>
       )}
-      <View style={styles.addBtn}>
-        <Button title="Add Pet" color={colors.primary} onPress={() => router.push("/(tabs)/pets/add")} />
-      </View>
 
-      {/* 🔹 Reminders Section */}
-      <TouchableOpacity onPress={() => router.push("/(tabs)/reminders")}>
-        <Text style={[styles.heading, { color: colors.text }]}>⏰ Upcoming Reminders</Text>
-      </TouchableOpacity>
+      {/* Reminders Section */}
+      <View style={styles.sectionHeader}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/reminders")}>
+          <Text style={[styles.heading, { color: colors.text }]}>⏰ Upcoming Reminders</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/reminders/add")}>
+          <Text style={[styles.addLink, { color: colors.primary }]}>+ Add</Text>
+        </TouchableOpacity>
+      </View>
       {reminders.length === 0 ? (
         <Text style={[styles.empty, { color: colors.text }]}>No reminders yet. Add one!</Text>
       ) : (
@@ -222,18 +229,16 @@ export default function DashboardScreen() {
           ))}
         </View>
       )}
-      <View style={styles.addBtn}>
-        <Button
-          title="Add Reminder"
-          color={colors.primary}
-          onPress={() => router.push("/(tabs)/reminders/add")}
-        />
-      </View>
 
-      {/* 🔹 Records Section */}
-      <TouchableOpacity onPress={() => router.push("/(tabs)/records")}>
-        <Text style={[styles.heading, { color: colors.text }]}>📑 Medical Records</Text>
-      </TouchableOpacity>
+      {/* Records Section */}
+      <View style={styles.sectionHeader}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/records")}>
+          <Text style={[styles.heading, { color: colors.text }]}>📑 Medical Records</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/records/add")}>
+          <Text style={[styles.addLink, { color: colors.primary }]}>+ Add</Text>
+        </TouchableOpacity>
+      </View>
       {records.length === 0 ? (
         <Text style={[styles.empty, { color: colors.text }]}>No records yet. Add one!</Text>
       ) : (
@@ -254,9 +259,6 @@ export default function DashboardScreen() {
           ))}
         </ScrollView>
       )}
-      <View style={styles.addBtn}>
-        <Button title="Add Record" color={colors.primary} onPress={() => router.push("/(tabs)/records/add")} />
-      </View>
     </ScrollView>
   );
 }
@@ -270,6 +272,19 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: 20, marginRight: 10,
     justifyContent: "center", alignItems: "center",
   },
+
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 5,
+  },
+  addLink: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
   profileInitial: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 
   header: {
