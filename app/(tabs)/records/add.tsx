@@ -62,6 +62,11 @@ export default function AddRecordScreen() {
       });
       if (!result.canceled) {
         setFile(result.assets[0]);
+        Toast.show({
+          type: "success",
+          text1: "File Selected",
+          text2: result.assets[0].name,
+        });
       }
     } catch {
       Toast.show({
@@ -87,8 +92,15 @@ export default function AddRecordScreen() {
     });
 
     const json = await res.json();
-    if (json.secure_url) return json.secure_url;
-    throw new Error("Cloudinary upload failed");
+    if (!json.secure_url) {
+      Toast.show({
+        type: "error",
+        text1: "Upload Failed",
+        text2: "Could not upload file to Cloudinary.",
+      });
+      throw new Error("Cloudinary upload failed");
+    }
+    return json.secure_url;
   };
 
   const handleAddRecord = async () => {
@@ -106,8 +118,8 @@ export default function AddRecordScreen() {
       if (!user) {
         Toast.show({
           type: "error",
-          text1: "Authentication Error. Not Logged In",
-          text2: "You must be logged in to add a record",
+          text1: "Authentication Required",
+          text2: "Please log in to add a record.",
         });
         return;
       }
